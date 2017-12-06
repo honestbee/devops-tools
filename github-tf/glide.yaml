@@ -1,0 +1,6 @@
+package: github.com/honestbee/devops-tools/github-tf
+import:
+- package: github.com/google/go-github
+  subpackages:
+  - github
+- package: golang.org/x/oauth2
