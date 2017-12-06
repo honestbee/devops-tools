@@ -66,7 +66,7 @@ func run(c *cli.Context) error {
 		return err
 	}
 
-	for _, t := range teams[] {
+	for _, t := range teams {
 		teamRoles, err := gitHub.GetTeamRoles(t)
 		if err != nil {
 			return err
