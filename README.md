@@ -13,4 +13,4 @@ glide up
 # Index
 
 - [postgres](postgres/): script to batch backup / restore postgres databases
-- [github-tf](github-tf/): script to read github teams and team_memberships into 
+- [github-tf](github-tf/): script to read github teams and team_memberships into TF Config
