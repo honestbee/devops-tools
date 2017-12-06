@@ -67,17 +67,21 @@ func run(c *cli.Context) error {
 	}
 	//get first 5 for testing purposes
 	for _, t := range teams[:5] {
-		fmt.Printf("%v (ID: %v)\n",
-			*t.Slug,
-			*t.ID,
-		)
-		teamRoles, _ := gitHub.GetTeamRoles(t)
-		for k, v := range teamRoles.UserRoles {
-			fmt.Printf("\t%v: %v\n",
-				k,
-				v,
-			)
+		teamRoles, err := gitHub.GetTeamRoles(t)
+		if err != nil {
+			return err
 		}
+
+		// // Render to stdout
+		// RenderTerraformConfig(teamRoles, os.Stdout)
+
+		// render a template per team
+		f, err := os.Create(fmt.Sprintf("output/teams-config/%v.tf", *t.Slug))
+		if err != nil {
+			return err
+		}
+		err = RenderTerraformConfig(teamRoles, f)
+		f.Close() //file won't be closed on panic? (use anynomous func and defer?)
 	}
 	return nil
 }
