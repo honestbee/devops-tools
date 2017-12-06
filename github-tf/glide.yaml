@@ -4,3 +4,6 @@ import:
   subpackages:
   - github
 - package: golang.org/x/oauth2
+- package: github.com/urfave/cli
+  version: ^1.20.0
+- name: github.com/sirupsen/logrus

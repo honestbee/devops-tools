@@ -1,5 +1,5 @@
-hash: 3878d74289404d3eae262068e4d947c5cb56afe6474e0130d203669a01a3244d
-updated: 2017-12-06T15:58:06.85748943+08:00
+hash: 6fcf8c95b861b05d01de2764326811844753c45f88b888b6e504cc767a7762e5
+updated: 2017-12-06T19:48:48.519665592+08:00
 imports:
 - name: github.com/golang/protobuf
   version: 1e59b77b52bf8e4b449a57e6f79f21226d571845
@@ -13,6 +13,14 @@ imports:
   version: 53e6ce116135b80d037921a7fdd5138cf32d7a8a
   subpackages:
   - query
+- name: github.com/sirupsen/logrus
+  version: d682213848ed68c0a260ca37d6dd5ace8423f5ba
+- name: github.com/urfave/cli
+  version: cfb38830724cc34fedffe9a2a29fb54fa9169cd1
+- name: golang.org/x/crypto
+  version: d172538b2cfce0c13cee31e647d0367aa8cd2486
+  subpackages:
+  - ssh/terminal
 - name: golang.org/x/net
   version: f2499483f923065a842d38eb4c7f1927e6fc6e6d
   subpackages:
@@ -22,6 +30,10 @@ imports:
   version: ea8c6730ed5beeff685fcd20d17423a8546daf6c
   subpackages:
   - internal
+- name: golang.org/x/sys
+  version: 8f0908ab3b2457e2e15403d3697c9ef5cb4b57a9
+  subpackages:
+  - unix
 - name: google.golang.org/appengine
   version: 9d8544a6b2c7df9cff240fcf92d7b2f59bc13416
   subpackages:

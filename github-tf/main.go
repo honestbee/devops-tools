@@ -1,13 +1,11 @@
 package main
 
 import (
-	"context"
 	"fmt"
 	"os"
 
-	"github.com/google/go-github/github"
+	log "github.com/sirupsen/logrus"
 	"github.com/urfave/cli"
-	"golang.org/x/oauth2"
 )
 
 var build = "0" // build number set at compile-time
@@ -24,6 +22,11 @@ func main() {
 			Usage:  "`token` to access GitHub API",
 			EnvVar: "GITHUB_TOKEN",
 		},
+		cli.StringFlag{
+			Name:  "log-level",
+			Value: "error",
+			Usage: "Log level (panic, fatal, error, warn, info, or debug)",
+		},
 	}
 	app := cli.NewApp()
 	app.Name = "github-tf"
@@ -39,43 +42,21 @@ func main() {
 }
 
 func run(c *cli.Context) error {
-	ctx := context.Background()
-	ts := oauth2.StaticTokenSource(
-		&oauth2.Token{AccessToken: c.String("token")},
-	)
-	tc := oauth2.NewClient(ctx, ts)
+	logLevelString := c.String("log-level")
+	logLevel, err := log.ParseLevel(logLevelString)
+	if err != nil {
+		return err
+	}
+	log.SetLevel(logLevel)
 
-	client := github.NewClient(tc)
-
-	opt := &github.RepositoryListByOrgOptions{
-		ListOptions: github.ListOptions{PerPage: 100},
+	gitHub := GitHub{
+		Organization: c.String("org"),
+		Token:        c.String("token"),
 	}
 
-	// get all pages of results
-	var allRepos []*github.Repository
-	for {
-		repos, resp, err := client.Repositories.ListByOrg(ctx, c.String("org"), opt)
-		if err != nil {
-			return err
-		}
-		allRepos = append(allRepos, repos...)
-		if resp.NextPage == 0 {
-			break
-		}
-		opt.Page = resp.NextPage
-		fmt.Printf("GitHub Rate Remaining: %v\n", resp.Rate.Remaining)
+	if gitHub.Organization == "" || gitHub.Token == "" {
+		cli.ShowAppHelpAndExit(c, 1)
 	}
 
-	for _, r := range allRepos {
-		repo_name := *r.FullName
-		repo_description := ""
-		if r.Description != nil {
-			repo_description = *r.Description
-		}
-		fmt.Printf("%v: %v\n",
-			repo_name,
-			repo_description,
-		)
-	}
-	return nil
+	return gitHub.Query()
 }
