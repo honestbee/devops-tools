@@ -23,9 +23,10 @@ func main() {
 			EnvVar: "GITHUB_TOKEN",
 		},
 		cli.StringFlag{
-			Name:  "log-level",
-			Value: "error",
-			Usage: "Log level (panic, fatal, error, warn, info, or debug)",
+			Name:   "log-level",
+			Value:  "error",
+			Usage:  "Log level (panic, fatal, error, warn, info, or debug)",
+			EnvVar: "LOG_LEVEL",
 		},
 	}
 	app := cli.NewApp()
@@ -58,5 +59,25 @@ func run(c *cli.Context) error {
 		cli.ShowAppHelpAndExit(c, 1)
 	}
 
-	return gitHub.Query()
+	//gitHub.ListRepos()
+
+	teams, err := gitHub.ListTeams()
+	if err != nil {
+		return err
+	}
+	//get first 5 for testing purposes
+	for _, t := range teams[:5] {
+		fmt.Printf("%v (ID: %v)\n",
+			*t.Slug,
+			*t.ID,
+		)
+		teamRoles, _ := gitHub.GetTeamRoles(t)
+		for k, v := range teamRoles.UserRoles {
+			fmt.Printf("\t%v: %v\n",
+				k,
+				v,
+			)
+		}
+	}
+	return nil
 }
