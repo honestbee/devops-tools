@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"sort"
 
 	"github.com/google/go-github/github"
 	log "github.com/sirupsen/logrus"
@@ -17,8 +18,9 @@ type (
 	}
 	// TeamRoles struct keeps a reference to the GitHub team and a map of UserRoles
 	TeamRoles struct {
-		Team      github.Team
-		UserRoles map[string]string
+		Team        github.Team
+		UserRoles   map[string]string
+		SortedUsers []string
 	}
 )
 
@@ -98,6 +100,15 @@ func (gh *GitHub) GetTeamRoles(t *github.Team) (TeamRoles, error) {
 	for _, u := range m {
 		tm.UserRoles[*u.Login] = "member"
 	}
+
+	// and keep a sorted list of users as map iterations are randomized
+	tm.SortedUsers = make([]string, len(tm.UserRoles))
+	i := 0
+	for u := range tm.UserRoles {
+		tm.SortedUsers[i] = u
+		i++
+	}
+	sort.Strings(tm.SortedUsers)
 	return tm, nil
 }
 
