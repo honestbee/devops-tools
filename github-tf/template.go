@@ -20,3 +20,11 @@ func RenderTerraformImport(tr TeamRoles, wr io.Writer) error {
 			ParseFiles("templates/import.sh.tpl"))
 	return t.Execute(wr, tr)
 }
+
+// RenderVaultPolicy renders vault policies using vault-policy.hcl into target Writer
+func RenderVaultPolicy(tn []string, wr io.Writer) error {
+	t := template.Must(
+		template.New("vault-policy.hcl").
+			ParseFiles("templates/vault-policy.hcl"))
+	return t.Execute(wr, tn)
+}
