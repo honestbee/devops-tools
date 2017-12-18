@@ -23,7 +23,7 @@ Since `helmns` and `helmls` are written in Bash, they can run in shells that sup
 - Download the `helmns` and `helmls` scripts
   
   ```bash
-  for s in helmns helmls; do curl -sLo $s https://github.com/honestbee/devops-tools/tree/master/helmns/$s; done
+  for s in helmns helmls; do curl -sLo $s https://github.com/honestbee/devops-tools/tree/master/helmns/$s; chmod +x $s; done
   ```
 
 - Either save all somewhere on your `PATH` (like `/usr/local/bin`):
