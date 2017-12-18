@@ -1,0 +1,24 @@
+#!/bin/bash
+#
+# helmns(1) is a utility to force tiller-namespace to current namespace
+
+[[ -n $DEBUG ]] && set -x
+
+set -eou pipefail
+IFS=$'\n\t'
+
+current_context() {
+  kubectl config view -o=jsonpath='{.current-context}'
+}
+
+current_namespace() {
+  local cur_ctx=$(current_context)
+  ns="$(kubectl config view -o=jsonpath="{.contexts[?(@.name==\"${cur_ctx}\")].context.namespace}")"
+  if [[ -z "${ns}" ]]; then
+    echo "default"
+  else
+    echo "${ns}"
+  fi
+}
+
+exec helm --tiller-namespace "$(current_namespace)" "$@"
