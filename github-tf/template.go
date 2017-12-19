@@ -24,7 +24,7 @@ func RenderTerraformImport(tr TeamRoles, wr io.Writer) error {
 // RenderVaultPolicy renders vault policies using vault-policy.hcl into target Writer
 func RenderVaultPolicy(tn []string, wr io.Writer) error {
 	t := template.Must(
-		template.New("vault-policy.hcl").
-			ParseFiles("templates/vault-policy.hcl"))
+		template.New("vault-policy.tpl").
+			ParseFiles("templates/vault-policy.tpl"))
 	return t.Execute(wr, tn)
 }
