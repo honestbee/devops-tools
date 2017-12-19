@@ -20,3 +20,11 @@ func RenderTerraformImport(tr TeamRoles, wr io.Writer) error {
 			ParseFiles("templates/import.sh.tpl"))
 	return t.Execute(wr, tr)
 }
+
+// RenderGhacYaml renders teams.yaml file in
+func RenderGhacYaml(trl TeamRolesList, wr io.Writer) error {
+	t := template.Must(
+		template.New("team.yaml.tpl").
+			ParseFiles("templates/team.yaml.tpl"))
+	return t.Execute(wr, trl)
+}

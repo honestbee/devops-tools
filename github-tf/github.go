@@ -22,6 +22,10 @@ type (
 		UserRoles   map[string]string
 		SortedUsers []string
 	}
+	// TeamRolesList struct keeps array of all TeamRoles
+	TeamRolesList struct {
+		TeamRoles []TeamRoles
+	}
 )
 
 // ListRepos will list all repos for the organization
