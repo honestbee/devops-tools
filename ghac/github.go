@@ -2,6 +2,7 @@ package main
 
 import (
 	"io/ioutil"
+	"strings"
 
 	log "github.com/sirupsen/logrus"
 	yaml "gopkg.in/yaml.v2"
@@ -21,6 +22,12 @@ type (
 	// TeamList struct holds a list of GitHub teams
 	TeamList struct {
 		Teams []Team `yaml:"teams"`
+	}
+
+	// TeamVault struct for vault template
+	TeamVault struct {
+		ShortName string
+		Env       string
 	}
 )
 
@@ -71,4 +78,16 @@ func readTeams(yamlfile string) (*TeamList, error) {
 	log.Debugf("--- tl:\n%v\n\n", tl)
 
 	return &tl, nil
+}
+
+func parseTeamVault(name string) TeamVault {
+	tv := TeamVault{}
+	if strings.Contains(name, "staging") || strings.Contains(name, "production") || strings.Contains(name, "prod") {
+		nameSlice := strings.Split(name, "-")
+		shortName := strings.Join(nameSlice[:len(nameSlice)-1], "-")
+		env := nameSlice[len(nameSlice)-1]
+		tv.ShortName = shortName
+		tv.Env = env
+	}
+	return tv
 }

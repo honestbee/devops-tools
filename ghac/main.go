@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path"
+	"path/filepath"
 	"strings"
 
 	log "github.com/sirupsen/logrus"
@@ -34,6 +35,11 @@ func main() {
 			Name:  "template, t",
 			Value: "templates/team.tf.tpl",
 			Usage: "Desired template used to render output",
+		},
+		cli.StringFlag{
+			Name:  "format, f",
+			Value: "terraform",
+			Usage: "output format (terraform|vault)",
 		},
 	}
 	app := cli.NewApp()
@@ -74,21 +80,41 @@ func run(c *cli.Context) error {
 		return err
 	}
 
-	tpl := c.String("template") //expect name.tf.tpl
-	suffix := path.Ext(strings.TrimSuffix(tpl, ".tpl"))
+	tpl := c.String("template")                                    //expect name.tf.tpl or name.hcl.tpl
+	suffix := path.Ext(strings.TrimSuffix(tpl, filepath.Ext(tpl))) // .tf or .hcl
 	log.Debugf("suffix: %v", suffix)
 
+	outputFormat := c.String("format")
+
 	for _, t := range tl.Teams {
-		// render template to destination (1 file per team)
-		f, err := os.Create(path.Join(dstDirName, fmt.Sprintf("%v%v", t.Slug, suffix)))
-		if err != nil {
-			return err
+
+		// Check format
+		if outputFormat == "terraform" {
+			// render template to destination (1 file per team)
+			f, err := os.Create(path.Join(dstDirName, fmt.Sprintf("%v%v", t.Slug, suffix)))
+			if err != nil {
+				return err
+			}
+
+			err = t.RenderTemplate(tpl, f)
+			f.Close()
+			if err != nil {
+				return err
+			}
+		} else if outputFormat == "vault" {
+			// Parse team and return TeamVault struct
+			tv := parseTeamVault(t.Slug)
+			f, err := os.Create(path.Join(dstDirName, fmt.Sprintf("%v-%v%v", tv.ShortName, tv.Env, suffix)))
+			if err != nil {
+				return err
+			}
+			err = tv.RenderTemplate(tpl, f)
+			f.Close()
+			if err != nil {
+				return err
+			}
 		}
-		err = RenderTemplate(t, tpl, f)
-		f.Close()
-		if err != nil {
-			return err
-		}
+
 	}
 	return nil
 }
