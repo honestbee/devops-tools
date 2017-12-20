@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path"
+	"path/filepath"
 	"strings"
 
 	log "github.com/sirupsen/logrus"
@@ -74,21 +75,39 @@ func run(c *cli.Context) error {
 		return err
 	}
 
-	tpl := c.String("template") //expect name.tf.tpl
-	suffix := path.Ext(strings.TrimSuffix(tpl, ".tpl"))
+	tpl := c.String("template")                                    //expect name.tf.tpl or name.hcl.tpl
+	suffix := path.Ext(strings.TrimSuffix(tpl, filepath.Ext(tpl))) // .tf or .hcl
 	log.Debugf("suffix: %v", suffix)
 
 	for _, t := range tl.Teams {
-		// render template to destination (1 file per team)
-		f, err := os.Create(path.Join(dstDirName, fmt.Sprintf("%v%v", t.Slug, suffix)))
-		if err != nil {
-			return err
+
+		// Check format
+		if suffix == ".tf" {
+			// render template to destination (1 file per team)
+			f, err := os.Create(path.Join(dstDirName, fmt.Sprintf("%v%v", t.Slug, suffix)))
+			if err != nil {
+				return err
+			}
+
+			err = RenderTemplate(t, tpl, f)
+			f.Close()
+			if err != nil {
+				return err
+			}
+		} else if suffix == ".hcl" {
+			// Parse team and return TeamVault struct
+			tv := parseTeamVault(t.Slug)
+			f, err := os.Create(path.Join(dstDirName, fmt.Sprintf("%v-%v%v", tv["ShortName"], tv["Env"], suffix)))
+			if err != nil {
+				return err
+			}
+			err = RenderTemplate(tv, tpl, f)
+			f.Close()
+			if err != nil {
+				return err
+			}
 		}
-		err = RenderTemplate(t, tpl, f)
-		f.Close()
-		if err != nil {
-			return err
-		}
+
 	}
 	return nil
 }
