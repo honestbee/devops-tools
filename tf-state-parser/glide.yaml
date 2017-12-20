@@ -1,0 +1,11 @@
+package: github.com/honestbee/devops-tools/ghac
+import:
+- package: gopkg.in/yaml.v2
+- package: github.com/google/go-github
+  subpackages:
+  - github
+- package: golang.org/x/oauth2
+- package: github.com/urfave/cli
+  version: ^1.20.0
+- package: github.com/sirupsen/logrus
+  version: ^1.0.4
