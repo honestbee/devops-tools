@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path"
+	"regexp"
 	"strings"
 
 	log "github.com/sirupsen/logrus"
@@ -27,13 +28,17 @@ func main() {
 		},
 		cli.StringFlag{
 			Name:  "destination, d",
-			Value: "output/teams-config",
+			Value: "output/teams-config/",
 			Usage: "Destination `directory` to render in - must exist",
 		},
 		cli.StringFlag{
 			Name:  "template, t",
 			Value: "templates/team.tf.tpl",
 			Usage: "Desired template used to render output",
+		},
+		cli.StringFlag{
+			Name:  "filter, f",
+			Usage: "`regex` filter on teams (Slug only for now)",
 		},
 	}
 	app := cli.NewApp()
@@ -69,6 +74,15 @@ func run(c *cli.Context) error {
 		cli.ShowAppHelpAndExit(c, 1)
 	}
 
+	var regexFilter *regexp.Regexp
+	if c.String("filter") != "" {
+		regexFilter, err = regexp.Compile(c.String("filter"))
+		if err != nil {
+			//invalid filter
+			return err
+		}
+	}
+
 	tl, err := readTeams(c.String("source"))
 	if err != nil {
 		return err
@@ -79,15 +93,17 @@ func run(c *cli.Context) error {
 	log.Debugf("suffix: %v", suffix)
 
 	for _, t := range tl.Teams {
-		// render template to destination (1 file per team)
-		f, err := os.Create(path.Join(dstDirName, fmt.Sprintf("%v%v", t.Slug, suffix)))
-		if err != nil {
-			return err
-		}
-		err = RenderTemplate(t, tpl, f)
-		f.Close()
-		if err != nil {
-			return err
+		if regexFilter == nil || regexFilter.MatchString(t.Slug) {
+			// render template to destination (1 file per team)
+			f, err := os.Create(path.Join(dstDirName, fmt.Sprintf("%v%v", t.Slug, suffix)))
+			if err != nil {
+				return err
+			}
+			err = RenderTemplate(t, tpl, f)
+			f.Close()
+			if err != nil {
+				return err
+			}
 		}
 	}
 	return nil
