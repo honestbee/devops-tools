@@ -21,31 +21,29 @@ type (
 		SlugPrefix  string
 		SlugSuffix  string
 	}
-	// TeamListFromYaml is a TeamList wrapper with custom UnmarshalYaml to fill computed fields
-	TeamListFromYaml TeamList
+	// TeamFromYaml is a Team wrapper with custom UnmarshalYaml to fill computed fields
+	TeamFromYaml Team
 	// TeamList struct holds a list of GitHub teams
 	TeamList struct {
-		Teams []*Team `yaml:"teams"`
+		Teams []*TeamFromYaml `yaml:"teams"`
 	}
 )
 
-// UnmarshalYAML implements how to unmarshal while adding computed fields
-func (d *TeamListFromYaml) UnmarshalYAML(unmarshal func(interface{}) error) error {
-	if err := unmarshal((*TeamList)(d)); err != nil {
+// UnmarshalYAML implements custom unmarshal which adds computed fields
+func (d *TeamFromYaml) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	if err := unmarshal((*Team)(d)); err != nil {
 		return err
 	}
 	// compute additional fields for all teams
-	for _, t := range d.Teams {
-		sl := strings.Split(t.Slug, "-")
-		t.SlugPrefix = strings.Join(sl[:len(sl)-1], "-")
-		t.SlugSuffix = sl[len(sl)-1]
-		log.Debugf("SlugPrefix %v - SlugSuffix %v", t.SlugPrefix, t.SlugSuffix)
-	}
+	sl := strings.Split(d.Slug, "-")
+	d.SlugPrefix = strings.Join(sl[:len(sl)-1], "-")
+	d.SlugSuffix = sl[len(sl)-1]
+	log.Debugf("SlugPrefix %v - SlugSuffix %v", d.SlugPrefix, d.SlugSuffix)
 	return nil
 }
 
 func readTeams(yamlfile string) (*TeamList, error) {
-	tl := TeamListFromYaml{}
+	tl := TeamList{}
 	data, err := ioutil.ReadFile(yamlfile)
 	if err != nil {
 		return nil, err
@@ -56,5 +54,5 @@ func readTeams(yamlfile string) (*TeamList, error) {
 	}
 	log.Debugf("--- tl:\n%v\n\n", tl)
 
-	return (*TeamList)(&tl), nil
+	return &tl, nil
 }
