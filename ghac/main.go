@@ -96,7 +96,7 @@ func run(c *cli.Context) error {
 				return err
 			}
 
-			err = t.RenderTemplate(tpl, f)
+			err = RenderTemplate(t, tpl, f)
 			f.Close()
 			if err != nil {
 				return err
@@ -104,11 +104,11 @@ func run(c *cli.Context) error {
 		} else if outputFormat == "vault" {
 			// Parse team and return TeamVault struct
 			tv := parseTeamVault(t.Slug)
-			f, err := os.Create(path.Join(dstDirName, fmt.Sprintf("%v-%v%v", tv.ShortName, tv.Env, suffix)))
+			f, err := os.Create(path.Join(dstDirName, fmt.Sprintf("%v-%v%v", tv["ShortName"], tv["Env"], suffix)))
 			if err != nil {
 				return err
 			}
-			err = tv.RenderTemplate(tpl, f)
+			err = RenderCustomTemplate(tv, tpl, f)
 			f.Close()
 			if err != nil {
 				return err
