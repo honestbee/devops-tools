@@ -36,11 +36,6 @@ func main() {
 			Value: "templates/team.tf.tpl",
 			Usage: "Desired template used to render output",
 		},
-		cli.StringFlag{
-			Name:  "format, f",
-			Value: "terraform",
-			Usage: "output format (terraform|vault)",
-		},
 	}
 	app := cli.NewApp()
 	app.Name = "ghac"
@@ -84,12 +79,10 @@ func run(c *cli.Context) error {
 	suffix := path.Ext(strings.TrimSuffix(tpl, filepath.Ext(tpl))) // .tf or .hcl
 	log.Debugf("suffix: %v", suffix)
 
-	outputFormat := c.String("format")
-
 	for _, t := range tl.Teams {
 
 		// Check format
-		if outputFormat == "terraform" {
+		if suffix == ".tf" {
 			// render template to destination (1 file per team)
 			f, err := os.Create(path.Join(dstDirName, fmt.Sprintf("%v%v", t.Slug, suffix)))
 			if err != nil {
@@ -101,7 +94,7 @@ func run(c *cli.Context) error {
 			if err != nil {
 				return err
 			}
-		} else if outputFormat == "vault" {
+		} else if suffix == ".hcl" {
 			// Parse team and return TeamVault struct
 			tv := parseTeamVault(t.Slug)
 			f, err := os.Create(path.Join(dstDirName, fmt.Sprintf("%v-%v%v", tv["ShortName"], tv["Env"], suffix)))
