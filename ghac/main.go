@@ -101,7 +101,7 @@ func run(c *cli.Context) error {
 			if err != nil {
 				return err
 			}
-			err = RenderCustomTemplate(tv, tpl, f)
+			err = RenderTemplate(tv, tpl, f)
 			f.Close()
 			if err != nil {
 				return err
