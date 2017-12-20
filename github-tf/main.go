@@ -66,11 +66,14 @@ func run(c *cli.Context) error {
 		return err
 	}
 
+	teamRolesArr := make([]TeamRoles, len(teams))
 	for _, t := range teams {
+		log.Debugf("Appending TeamRoles for: %v\n", *t.Slug)
 		teamRoles, err := gitHub.GetTeamRoles(t)
 		if err != nil {
 			return err
 		}
+		teamRolesArr = append(teamRolesArr, teamRoles)
 		// render template to a TF config per team
 		f, err := os.Create(fmt.Sprintf("output/teams-config/%v.tf", *t.Slug))
 		if err != nil {
@@ -87,5 +90,17 @@ func run(c *cli.Context) error {
 		err = RenderTerraformImport(teamRoles, f)
 		f.Close() //file won't be closed on panic? (use anynomous func and defer?)
 	}
+
+	log.Debugf("TeamRolesArr final length: %v\n", len(teamRolesArr))
+	trl := TeamRolesList{
+		TeamRoles: teamRolesArr,
+	}
+	f, err := os.Create("output/teams.yaml")
+	if err != nil {
+		return err
+	}
+	err = RenderGhacYaml(trl, f)
+	f.Close()
+
 	return nil
 }
