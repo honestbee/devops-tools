@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"strconv"
+	"strings"
 
 	"github.com/google/go-github/github"
 	log "github.com/sirupsen/logrus"
@@ -55,24 +56,32 @@ func writeImports(s *state, gitHub *GitHub) error {
 			// root (0) only has the github_team resource type
 			// everything else only has github_team_membership resource type
 			if i == 0 {
-				//import module.ghac.github_team.<slug> <id>
 				fmt.Printf("terraform state mv %v module.ghac.github_team.%v\n",
 					rm["key"],
 					*teamMap[k].Slug,
 				)
+				//import module.ghac.github_team.<slug> <id>
 			} else {
 				user := rm["username"]
 				slug := *teamMap[rm["team_id"]].Slug
 
-				//import module.ghac.github_team_membership.<slug>-<user> <id>
+				//log.Debugf("key:%v", rm["key"])
+				s := strings.Split(rm["key"], ".")
+				var path string
+				if len(s) == 3 {
+					path = strings.Join(s[:2], ".") + "[" + s[2] + "]"
+				} else {
+					path = rm["key"]
+				}
 
 				fmt.Printf("terraform state mv module.%v.%v module.ghac.github_team_membership.%v-%v\n",
 					m.Path[1],
-					rm["key"],
+					path,
 					slug,
 					user,
 				)
 
+				//import module.ghac.github_team_membership.<slug>-<user> <id>
 				//fmt.Printf("terraform state import module.ghac.github_team_membership.%v-%v %v\n", slug, user, k)
 			}
 		}
