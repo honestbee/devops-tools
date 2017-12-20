@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"strings"
 
 	log "github.com/sirupsen/logrus"
 	"github.com/urfave/cli"
@@ -86,6 +87,16 @@ func run(c *cli.Context) error {
 		}
 		err = RenderTerraformImport(teamRoles, f)
 		f.Close() //file won't be closed on panic? (use anynomous func and defer?)
+
+		tempString := strings.Split(*t.Slug, "-")
+		if len(tempString) == 2 {
+			f, err = os.Create(fmt.Sprintf("output/vault-policies/%v.hcl", tempString))
+			if err != nil {
+				return err
+			}
+			err = RenderVaultPolicy(tempString, f)
+			f.Close()
+		}
 	}
 	return nil
 }
