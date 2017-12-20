@@ -99,7 +99,7 @@ func run(c *cli.Context) error {
 			if err != nil {
 				return err
 			}
-			err = RenderTemplate(t, tpl, f)
+			err = RenderTemplate((*Team)(t), tpl, f)
 			f.Close()
 			if err != nil {
 				return err
