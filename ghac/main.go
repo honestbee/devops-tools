@@ -84,6 +84,7 @@ func run(c *cli.Context) error {
 		if err != nil {
 			return err
 		}
+		log.Debugf("SlugPrefix: %v", t.SlugPrefix)
 		err = RenderTemplate(t, tpl, f)
 		f.Close()
 		if err != nil {

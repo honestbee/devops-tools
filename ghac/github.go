@@ -2,6 +2,7 @@ package main
 
 import (
 	"io/ioutil"
+	"strings"
 
 	log "github.com/sirupsen/logrus"
 	yaml "gopkg.in/yaml.v2"
@@ -17,49 +18,34 @@ type (
 		Privacy     string            `yaml:"privacy,omitempty"`
 		UserRoles   map[string]string `yaml:"user_roles"`
 		Parent      *Team             `yaml:"parent,omitempty"`
+		SlugPrefix  string
+		SlugSuffix  string
 	}
+	// TeamListFromYaml is a TeamList wrapper with custom UnmarshalYaml to fill computed fields
+	TeamListFromYaml TeamList
 	// TeamList struct holds a list of GitHub teams
 	TeamList struct {
-		Teams []Team `yaml:"teams"`
+		Teams []*Team `yaml:"teams"`
 	}
 )
 
+// UnmarshalYAML implements how to unmarshal while adding computed fields
+func (d *TeamListFromYaml) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	if err := unmarshal((*TeamList)(d)); err != nil {
+		return err
+	}
+	// compute additional fields for all teams
+	for _, t := range d.Teams {
+		sl := strings.Split(t.Slug, "-")
+		t.SlugPrefix = strings.Join(sl[:len(sl)-1], "-")
+		t.SlugSuffix = sl[len(sl)-1]
+		log.Debugf("SlugPrefix %v - SlugSuffix %v", t.SlugPrefix, t.SlugSuffix)
+	}
+	return nil
+}
+
 func readTeams(yamlfile string) (*TeamList, error) {
-	// tl := TeamList{
-	// 	Teams: []Team{
-	// 		Team{
-	// 			ID:          1,
-	// 			Name:        "Test team1",
-	// 			Slug:        "test-team1",
-	// 			Description: "test team1",
-	// 			UserRoles: map[string]string{
-	// 				"admin1": "maintainer",
-	// 				"admin2": "maintainer",
-	// 				"user1":  "member",
-	// 			},
-	// 		},
-	// 		Team{
-	// 			ID:          2,
-	// 			Name:        "Test team2",
-	// 			Slug:        "test-team2",
-	// 			Description: "test team2",
-	// 			UserRoles: map[string]string{
-	// 				"admin1": "maintainer",
-	// 				"admin2": "maintainer",
-	// 				"user2":  "member",
-	// 			},
-	// 		},
-	// 	},
-	// }
-	// fmt.Printf("--- tl:\n%v\n\n", tl)
-
-	// d, err := yaml.Marshal(&tl)
-	// if err != nil {
-	// 	log.Fatalf("error: %v", err)
-	// }
-	// fmt.Printf("--- tl dump:\n%s\n\n", string(d))
-
-	tl := TeamList{}
+	tl := TeamListFromYaml{}
 	data, err := ioutil.ReadFile(yamlfile)
 	if err != nil {
 		return nil, err
@@ -70,5 +56,5 @@ func readTeams(yamlfile string) (*TeamList, error) {
 	}
 	log.Debugf("--- tl:\n%v\n\n", tl)
 
-	return &tl, nil
+	return (*TeamList)(&tl), nil
 }
