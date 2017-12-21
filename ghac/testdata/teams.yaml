@@ -11,7 +11,16 @@ teams:
   name: Test team2
   description: test team2
   slug: test-team2
-  privacy: public
+  privacy: secret
+  user_roles:
+    admin1: maintainer
+    admin2: maintainer
+    user2: member
+- id: 3
+  name: Test team3
+  description: test team3
+  slug: testteam3
+  privacy: secret
   user_roles:
     admin1: maintainer
     admin2: maintainer

@@ -52,7 +52,6 @@ func readTeams(yamlfile string) (*TeamList, error) {
 	if err != nil {
 		return nil, err
 	}
-	log.Debugf("--- tl:\n%v\n\n", tl)
 
 	return &tl, nil
 }

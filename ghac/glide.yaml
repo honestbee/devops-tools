@@ -5,3 +5,5 @@ import:
   version: ^1.20.0
 - package: github.com/sirupsen/logrus
   version: ^1.0.4
+- package: github.com/Masterminds/sprig
+  version: ^2.14.1
