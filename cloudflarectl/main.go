@@ -39,6 +39,16 @@ func main() {
 			Usage:  "`<files slice>` which need to be cleared ",
 			EnvVar: "CF_FILES",
 		},
+		cli.StringFlag{
+			Name:   "url",
+			Usage:  "URL to clear cache (non-scheme)",
+			EnvVar: "URL_BASE",
+		},
+		cli.StringFlag{
+			Name:   "domain",
+			Usage:  "cloudflare domain",
+			EnvVar: "CF_DOMAIN",
+		},
 	}
 
 	app.Commands = []cli.Command{
@@ -51,6 +61,8 @@ func main() {
 				apiKey := c.String("apiKey")
 				email := c.String("email")
 				file := c.String("file")
+				domain := c.String("domain")
+				url := c.String("url")
 
 				if (len(email) == 0) || (len(apiKey) == 0) {
 					return cli.NewExitError("CF_API_KEY & CF_API_EMAIL must be defined!", 1)
@@ -61,7 +73,7 @@ func main() {
 					log.Fatal(err)
 				}
 
-				err = clearCache(apiKey, email, fileList)
+				err = clearCache(apiKey, email, fileList, domain, url)
 				return err
 			},
 		},

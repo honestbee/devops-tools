@@ -7,9 +7,9 @@ import (
 	cloudflare "github.com/cloudflare/cloudflare-go"
 )
 
-func clearCache(apiKey string, email string, files []string) error {
+func clearCache(apiKey string, email string, files []string, domain string, url string) error {
 	for i := range files {
-		files[i] = "https://assets.honestbee.com/" + files[i]
+		files[i] = "https://" + url + files[i]
 	}
 	purgeCacheRequest := cloudflare.PurgeCacheRequest{
 		Files: files,
@@ -22,7 +22,7 @@ func clearCache(apiKey string, email string, files []string) error {
 	}
 
 	// Fetch the zone ID
-	id, err := api.ZoneIDByName("honestbee.com") // Assuming example.com exists in your Cloudflare account already
+	id, err := api.ZoneIDByName(domain) // Assuming example.com exists in your Cloudflare account already
 	if err != nil {
 		log.Fatal(err)
 	}
