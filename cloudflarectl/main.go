@@ -51,6 +51,8 @@ func main() {
 		},
 	}
 
+	app.Flags = flags
+
 	app.Commands = []cli.Command{
 		{
 			Name:    "clear",
