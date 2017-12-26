@@ -5,6 +5,7 @@ pipeline:
     dockerfile: ./cloudflarectl/Dockerfile
     context: ./cloudflarectl/
     tags:
+      - cloudflarectl
       - cloudflarectl-${DRONE_BRANCH}
       - cloudflarectl-${DRONE_BRANCH}-${DRONE_COMMIT_SHA:0:8}
     registry: quay.io
