@@ -1,0 +1,21 @@
+pipeline:
+  docker-build:
+    image: plugins/docker:17.05
+    repo: quay.io/honestbee/cloudflarectl
+    tags:
+      - ${DRONE_BRANCH}-${DRONE_COMMIT_SHA:0:8}
+      - latest
+    registry: quay.io
+    email: "devops@honestbee.com"
+    secrets: [ docker_username, docker_password ]
+    when:
+      branch: [ master ]
+
+  notify:
+    image: plugins/slack
+    channel: feed-devops
+    secrets:
+      - source: slack_webhook
+        target: plugin_webhook
+    when:
+      status: [ success, failure ]

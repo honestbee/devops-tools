@@ -17,9 +17,14 @@ func parseFile(fileName string) ([]string, error) {
 
 func (s stringsAlias) removeEmpty() []string {
 	for i, element := range s {
-		if element == "" {
-			s = append(s[:i], s[i+1:]...)
+		if i < len(s)-1 {
+			if element == "" {
+				s = append(s[:i], s[i+1:]...)
+			} else {
+				s = s[:i]
+			}
 		}
 	}
+
 	return s
 }
