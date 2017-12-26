@@ -2,7 +2,7 @@ pipeline:
   build-cloudflarectl:
     image: plugins/docker:17.05
     repo: quay.io/honestbee/cloudflarectl
-    dockerfile: ./clouflarectl/Dockerfile
+    dockerfile: ./cloudflarectl/Dockerfile
     tags:
       - ${DRONE_BRANCH}-${DRONE_COMMIT_SHA:0:8}
       - latest
