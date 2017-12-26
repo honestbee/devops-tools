@@ -1,5 +1,5 @@
 pipeline:
-  docker-build:
+  build-cloudflarectl:
     image: plugins/docker:17.05
     repo: quay.io/honestbee/cloudflarectl
     tags:
@@ -9,7 +9,7 @@ pipeline:
     email: "devops@honestbee.com"
     secrets: [ docker_username, docker_password ]
     when:
-      branch: [ master ]
+      branch: [ master, 2017-12-25-add-cloudclare-clear-cache-tool ]
 
   notify:
     image: plugins/slack
