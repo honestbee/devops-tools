@@ -1,6 +1,29 @@
 # CloudflareCTL
 A tool to help manage cloudflare resources
 
+## Installation
+- Binary could be downloaded [here](tech.honestbee.com/devops-tools/cloudflarectl.tar.gz)
+```bash
+curl tech.honestbee.com/devops-tools/cloudflarectl.tar.gz | tar xvf
+chmod +x cloudflarectl
+mv cloudflarectl /usr/local/bin/
+```
+
+- Docker version is available [here](https://quay.io/repository/honestbee/devops-tools?tab=tags)
+```
+docker pull quay.io/repository/honestbee/devops-tools:cloudflarectl
+```
+
+- Build from source
+```bash
+# build binary to use on MacOS, available at bin/osx/cloudflarectl
+✗ make binary-osx
+
+# build generic linux binary, available at bin/linux/cloudflarectl
+✗ make binary-linux
+```
+
+## Usage
 ```
 NAME:
    cloudflarectl - golang tool to clear cloudflare cache
@@ -29,3 +52,8 @@ GLOBAL OPTIONS:
    --help, -h                              show help
    --version, -v                           print the version
 ```
+
+## Todos
+- [x] clear cache on specific URLs
+- [ ] clear everything
+- [ ] show cloudflare status
