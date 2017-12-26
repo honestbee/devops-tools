@@ -15,4 +15,4 @@ RUN set -ex \
   && apk add --no-cache bash ca-certificates git
 
 COPY --from=builder /cloudflarectl /bin/cloudflarectl
-ENTRYPOINT [ "/bin/cloudflarectl" ]
+ENTRYPOINT [ "bash" ]
