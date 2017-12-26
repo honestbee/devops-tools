@@ -12,7 +12,7 @@ pipeline:
     email: "devops@honestbee.com"
     secrets: [ docker_username, docker_password ]
     when:
-      branch: [ master, 2017-12-25-add-cloudclare-clear-cache-tool ]
+      branch: [ master ]
 
   notify:
     image: plugins/slack
