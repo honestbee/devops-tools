@@ -1,0 +1,6 @@
+package: github.com/honestbee/devops-tools/cloudflarectl
+import:
+- package: github.com/cloudflare/cloudflare-go
+  version: ^0.8.4
+- package: github.com/urfave/cli
+  version: ^1.20.0
