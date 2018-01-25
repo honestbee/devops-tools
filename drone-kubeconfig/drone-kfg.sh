@@ -5,7 +5,7 @@ set -eou pipefail
 usage() {
   cat <<"EOF"
 USAGE:
-  drone-kfg <PREFIX> <CONTEXT> <REPO_NAME> : Add Drone secrets for Kubernetes for repo_name
+  drone-kfg <PREFIX> <KUBE_CONTEXT> <REPO_NAME> : Add Drone secrets for Kubernetes for repo_name
   drone-kfg -h,--help                      : show this message
 EOF
   exit 1
@@ -23,17 +23,19 @@ set_secrets() {
   local api_server=$(kubectl config view -o=jsonpath="{.clusters[?(@.name==\"${cluster}\")].cluster.server}")
 
   local secret=$(kubectl --context $context get -n $NS sa $SA -o jsonpath="{.secrets[].name}")
-  local kube_token=$(kubectl --context $context get -n $NS secret $secret -o jsonpath="{.data.token}" | base64 -D)
+  local kube_token=$(kubectl --context $context get -n $NS secret $secret -o jsonpath="" | base64 -D)
   # currently no support for tls verification in drone helm!
   # local kube_ca=$(kubectl --context $context get -n $NS secret $secret -o jsonpath="{.data.ca\.crt}")
 
-  echo drone secret add --repository ${repo_name} --name ${prefix}_API_SERVER --value ${api_server}
-  echo drone secret add --repository ${repo_name} --name ${prefix}_KUBERNETES_TOKEN --value ${kube_token}
+  drone secret add --repository ${repo_name} --name ${prefix}_API_SERVER --value ${api_server}
+  drone secret add --repository ${repo_name} --name ${prefix}_KUBERNETES_TOKEN --value ${kube_token}
 }
 
 main() {
-  if [[ "${1}" == '-h' || "${1}" == '--help' ]]; then
-    usage
+  if [[ "$#" -eq 1 ]]; then
+    # if [[ "${1}" == '-h' || "${1}" == '--help' ]]; then
+      usage
+    # fi
   elif [[ "$#" -ne 3 ]]; then
     echo "exactly 3 arguments required"
     usage

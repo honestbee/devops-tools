@@ -5,7 +5,7 @@ Set up Kube API and Token for a drone repo of choice
 ```
 ./drone-kfg.sh -h
 USAGE:
-  drone-kfg <PREFIX> <CONTEXT> <REPO_NAME> : Add Drone secrets for Kubernetes for repo_name
+  drone-kfg <PREFIX> <KUBE_CONTEXT> <REPO_NAME> : Add Drone secrets for Kubernetes for repo_name
   drone-kfg -h,--help                      : show this message
 ```
 
