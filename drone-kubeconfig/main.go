@@ -14,6 +14,18 @@ import (
 
 var build = "0" // build number set at compile-time
 
+// Config to hold Command configuration
+type Config struct {
+	Repository     string        `json:"repo_name"`
+	ServiceAccount string        `json:"token"`
+	Namespace      string        `json:"namespace"`
+	Timeout        time.Duration `json:"organization"`
+	KubeContexts   []string      `json:"kube_contexts"`
+	CommandContext context.Context
+}
+
+var cfg = new(Config)
+
 func main() {
 	app := cli.NewApp()
 	app.Name = "drone-kfg"
@@ -68,20 +80,23 @@ func run(c *cli.Context) error {
 		return err
 	}
 
-	serviceAccount := c.String("service-account")
-	namespace := c.String("namespace")
-	killIn := c.Duration("timeout")
-
-	repoName := c.String("repository")
-	if repoName == "" {
-		repoName = c.Args().First()
+	cfg = &Config{
+		ServiceAccount: c.String("service-account"),
+		Namespace:      c.String("namespace"),
+		Timeout:        c.Duration("timeout"),
+		Repository:     c.String("repository"),
+		KubeContexts:   c.StringSlice("context"),
 	}
-	if repoName == "" {
+
+	if cfg.Repository == "" {
+		cfg.Repository = c.Args().First()
+	}
+	if cfg.Repository == "" {
 		fmt.Println("missing repository name")
 		cli.ShowAppHelpAndExit(c, 1)
 	}
 
-	ctxMap, err := parseContexts(c.StringSlice("context"))
+	ctxMap, err := parseContexts(cfg.KubeContexts)
 	if err != nil {
 		return err
 	}
@@ -91,28 +106,27 @@ func run(c *cli.Context) error {
 		cli.ShowAppHelpAndExit(c, 1)
 	}
 
-	ctx := context.Background()
+	cfg.CommandContext = context.Background()
 	for prefix, kubeCtx := range ctxMap {
 		fmt.Printf("Setting up %s (with prefix %s) ...\n", kubeCtx, prefix)
-		cluster, err := readKubeConfig(ctx, killIn, fmt.Sprintf(`{.contexts[?(@.name=="%v")].context.cluster}`, kubeCtx))
+		cluster, err := readKubeConfig(cfg, fmt.Sprintf(`{.contexts[?(@.name=="%v")].context.cluster}`, kubeCtx))
 		if err != nil {
 			return err
 		}
-		apiServer, err := readKubeConfig(ctx, killIn, fmt.Sprintf(`{.clusters[?(@.name=="%v")].cluster.server}`, cluster))
+		apiServer, err := readKubeConfig(cfg, fmt.Sprintf(`{.clusters[?(@.name=="%v")].cluster.server}`, cluster))
 		if err != nil {
 			return err
 		}
 		// fmt.Println(apiServer)
 
-
-		fmt.Printf("Retrieving token for service account: '%s' - namespace '%s' (with %v timeout) ...\n", serviceAccount, namespace, killIn)
+		fmt.Printf("Retrieving token for service account: '%s' - namespace '%s' (with %v timeout) ...\n", cfg.ServiceAccount, cfg.Namespace, cfg.Timeout)
 		command := []string{
 			"get",
 			"sa",
-			serviceAccount,
+			cfg.ServiceAccount,
 		}
 
-		secretName, err := runKubeCommand(ctx, killIn, kubeCtx, namespace, command, `{.secrets[].name}`)
+		secretName, err := runKubeCommand(cfg, kubeCtx, command, `{.secrets[].name}`)
 		if err != nil {
 			return err
 		}
@@ -123,7 +137,7 @@ func run(c *cli.Context) error {
 			secretName,
 		}
 
-		tokenb64, err := runKubeCommand(ctx, killIn, kubeCtx, namespace, command, "{.data.token}")
+		tokenb64, err := runKubeCommand(cfg, kubeCtx, command, "{.data.token}")
 		if err != nil {
 			return err
 		}
@@ -134,13 +148,13 @@ func run(c *cli.Context) error {
 		}
 
 		// fmt.Println(string(token))
-		fmt.Printf("Adding secrets for repoName '%s' (with %v timeout) ...\n", repoName, killIn)
-		
-		_, err = addDroneSecret(ctx, killIn, repoName, prefix, "API_SERVER", apiServer)
+		fmt.Printf("Adding secrets for repoName '%s' (with %v timeout) ...\n", cfg.Repository, cfg.Timeout)
+
+		_, err = addDroneSecret(cfg, prefix, "API_SERVER", apiServer)
 		if err != nil {
 			return err
 		}
-		_, err = addDroneSecret(ctx, killIn, repoName, prefix, "KUBERNETES_TOKEN", string(token))
+		_, err = addDroneSecret(cfg, prefix, "KUBERNETES_TOKEN", string(token))
 		if err != nil {
 			return err
 		}
@@ -165,7 +179,7 @@ func parseContexts(contexts []string) (map[string]string, error) {
 	return result, nil
 }
 
-func readKubeConfig(ctx context.Context, killIn time.Duration,  jsonpath string) (string, error) {
+func readKubeConfig(cfg *Config, jsonpath string) (string, error) {
 	readConfig := []string{
 		"config",
 		"view",
@@ -173,15 +187,15 @@ func readKubeConfig(ctx context.Context, killIn time.Duration,  jsonpath string)
 		fmt.Sprintf("jsonpath=\"%s\"", jsonpath),
 	}
 
-	return runCommand(ctx, "kubectl", killIn, readConfig)
+	return runCommand(cfg, "kubectl", readConfig)
 }
 
-func addDroneSecret(ctx context.Context, killIn time.Duration,  repoName string, prefix string, name string, value string) (string, error) {
+func addDroneSecret(cfg *Config, prefix string, name string, value string) (string, error) {
 	command := []string{
 		"secret",
 		"add",
 		"--repository",
-		repoName,
+		cfg.Repository,
 		"--name",
 		fmt.Sprintf("%s_%s", prefix, name),
 		"--value",
@@ -189,23 +203,19 @@ func addDroneSecret(ctx context.Context, killIn time.Duration,  repoName string,
 	}
 	// fmt.Println(command)
 
-	return runDroneCommand(ctx, killIn, command)
+	return runCommand(cfg, "drone", command)
 }
 
-func runKubeCommand(ctx context.Context, killIn time.Duration,  kubeCtx string, namespace string, command []string, jsonpath string) (string, error) {
-	command = append(command, "--context", kubeCtx, "--namespace", namespace)
+func runKubeCommand(cfg *Config, kubeCtx string, command []string, jsonpath string) (string, error) {
+	command = append(command, "--context", kubeCtx, "--namespace", cfg.Namespace)
 	command = append(command, "--output", fmt.Sprintf("jsonpath='%s'", jsonpath))
 
-	return runCommand(ctx, "kubectl", killIn, command)
-}
-
-func runDroneCommand(ctx context.Context, killIn time.Duration, command []string) (string, error) {
-	return runCommand(ctx, "drone", killIn, command)
+	return runCommand(cfg, "kubectl", command)
 }
 
 // Run binary in background with timeout, return unquoted output string
-func runCommand(ctx context.Context, binary string, killIn time.Duration, params []string) (string, error) {
-	ctx, _ = context.WithTimeout(ctx, killIn)
+func runCommand(cfg *Config, binary string, params []string) (string, error) {
+	ctx, _ := context.WithTimeout(cfg.CommandContext, cfg.Timeout)
 	cmd := exec.CommandContext(ctx, binary, params...)
 	// fmt.Println(params)
 	cmd.Stderr = os.Stderr
@@ -220,16 +230,16 @@ func runCommand(ctx context.Context, binary string, killIn time.Duration, params
 	return trimQuotes(string(out)), err
 }
 
-
 func trimQuotes(s string) string {
-    if len(s) >= 2 {
-        if s[0] == '"' && s[len(s)-1] == '"' {
-            return s[1 : len(s)-1]
-        } else if s[0] == '\'' && s[len(s)-1] == '\'' {
-            return s[1 : len(s)-1]
-        }
-    }
-    return s
+	if len(s) >= 2 {
+		switch {
+		case s[0] == '"' && s[len(s)-1] == '"':
+			return s[1 : len(s)-1]
+		case s[0] == '\'' && s[len(s)-1] == '\'':
+			return s[1 : len(s)-1]
+		}
+	}
+	return s
 }
 
 func checkBinaries() error {
@@ -238,8 +248,8 @@ func checkBinaries() error {
 		"drone",
 	}
 
-	for _, b := range bins{
-		_ , err := exec.LookPath(b)
+	for _, b := range bins {
+		_, err := exec.LookPath(b)
 		if err != nil {
 			return err
 		}
