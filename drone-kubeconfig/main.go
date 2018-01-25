@@ -18,7 +18,7 @@ func main() {
 	app := cli.NewApp()
 	app.Name = "drone-kfg"
 	app.Version = fmt.Sprintf("0.1.%s", build)
-	app.Usage = "retrieve and create drone secrets for kubernetes service accounts"
+	app.Usage = "create drone secrets for kubernetes service accounts"
 	app.EnableBashCompletion = true
 	app.Flags = []cli.Flag{
 		cli.StringFlag{

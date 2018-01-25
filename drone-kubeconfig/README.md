@@ -16,7 +16,7 @@ Tested with Kubernetes 1.7.12 and Drone 0.8.0
 
 ```
 NAME:
-   drone-kfg - retrieve and create drone secrets for kubernetes service accounts
+   drone-kfg - create drone secrets for kubernetes service accounts
 
 USAGE:
    drone-kfg [global options] command [command options] [arguments...]
