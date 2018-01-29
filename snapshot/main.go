@@ -11,15 +11,17 @@ import (
 	"github.com/aws/aws-sdk-go/service/rds"
 )
 
-func main() {
-
+func createRdsClient() *rds.RDS {
 	sess := session.Must(session.NewSession(&aws.Config{
 		Region: aws.String("ap-southeast-1"),
 	}))
 
 	svc := rds.New(sess)
+	return svc
+}
+
+func retrieveAllSnapshots(svc *rds.RDS) *rds.DescribeDBSnapshotsOutput {
 	input := &rds.DescribeDBSnapshotsInput{
-		// DBInstanceIdentifier: aws.String("hbpay-production"),
 		SnapshotType:  aws.String("manual"),
 		IncludePublic: aws.Bool(true),
 		IncludeShared: aws.Bool(true),
@@ -30,6 +32,29 @@ func main() {
 		fmt.Println(err)
 	}
 
+	return result
+}
+
+func retrieveSnapshots(dBInstanceIdentifier string, svc *rds.RDS) *rds.DescribeDBSnapshotsOutput {
+	input := &rds.DescribeDBSnapshotsInput{
+		DBInstanceIdentifier: aws.String(dBInstanceIdentifier),
+		SnapshotType:         aws.String("manual"),
+		IncludePublic:        aws.Bool(true),
+		IncludeShared:        aws.Bool(true),
+	}
+
+	result, err := svc.DescribeDBSnapshots(input)
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	return result
+}
+
+func cleanUpSnapshots(DBInstanceIdentifier string, limit string) {
+}
+
+func saveCsv(result *rds.DescribeDBSnapshotsOutput) {
 	records := [][]string{}
 
 	for index := 0; index < len(result.DBSnapshots); index++ {
@@ -45,7 +70,7 @@ func main() {
 
 	w := csv.NewWriter(outfile)
 
-	// w.Write([]string{"dateCreated", "DBInstanceIdentifier", "DBSnapshotIdentifier"})
+	w.Write([]string{"dateCreated", "DBInstanceIdentifier", "DBSnapshotIdentifier"})
 
 	for _, record := range records {
 		if err := w.Write(record); err != nil {
