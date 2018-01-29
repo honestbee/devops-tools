@@ -60,3 +60,11 @@ func main() {
 		log.Fatal(err)
 	}
 }
+
+func main() {
+
+	svc := createRdsClient()
+
+	result := retrieveSnapshots("hbpay-production", svc)
+	saveCsv(result)
+}
