@@ -51,7 +51,26 @@ func retrieveSnapshots(dBInstanceIdentifier string, svc *rds.RDS) *rds.DescribeD
 	return result
 }
 
-func cleanUpSnapshots(DBInstanceIdentifier string, limit string) {
+func cleanUpSnapshots(dBSnapshotIdentifier *string, svc *rds.RDS) {
+	input := &rds.DeleteDBSnapshotInput{
+		DBSnapshotIdentifier: aws.String(*dBSnapshotIdentifier),
+	}
+
+	result, err := svc.DeleteDBSnapshot(input)
+	if err != nil {
+		fmt.Println(err)
+	}
+	fmt.Println(result)
+}
+
+func maintainSnapshots(dBInstanceIdentifier string, svc *rds.RDS, limit int) {
+	input := retrieveSnapshots(dBInstanceIdentifier, svc)
+
+	if len(input.DBSnapshots) > limit {
+		for index := 0; index < len(input.DBSnapshots)-limit; index++ {
+			cleanUpSnapshots(input.DBSnapshots[index].DBSnapshotIdentifier, svc)
+		}
+	}
 }
 
 func saveCsv(result *rds.DescribeDBSnapshotsOutput) {
@@ -90,6 +109,7 @@ func main() {
 
 	svc := createRdsClient()
 
-	result := retrieveSnapshots("hbpay-production", svc)
-	saveCsv(result)
+	// result := retrieveSnapshots("hbpay-production", svc)
+	// saveCsv(result)
+	maintainSnapshots("hbpay-production", svc, 5)
 }
