@@ -9,7 +9,10 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/rds"
+	"github.com/urfave/cli"
 )
+
+var build = "0" // build number set at compile-time
 
 func createRdsClient() *rds.RDS {
 	sess := session.Must(session.NewSession(&aws.Config{
@@ -73,7 +76,7 @@ func maintainSnapshots(dBInstanceIdentifier string, svc *rds.RDS, limit int) {
 	}
 }
 
-func saveCsv(result *rds.DescribeDBSnapshotsOutput) {
+func saveCsv(result *rds.DescribeDBSnapshotsOutput, filePath string) {
 	records := [][]string{}
 
 	for index := 0; index < len(result.DBSnapshots); index++ {
@@ -81,7 +84,7 @@ func saveCsv(result *rds.DescribeDBSnapshotsOutput) {
 		records = append(records, []string{record.SnapshotCreateTime.String(), *record.DBInstanceIdentifier, *record.DBSnapshotIdentifier})
 	}
 
-	outfile, err := os.Create("resultsfile.csv")
+	outfile, err := os.Create(filePath)
 	if err != nil {
 		log.Fatal("Unable to open output")
 	}
@@ -105,11 +108,84 @@ func saveCsv(result *rds.DescribeDBSnapshotsOutput) {
 	}
 }
 
+func initApp() *cli.App {
+	app := cli.NewApp()
+	app.Name = "aws-snapshot-cleanup"
+	app.Usage = "golang tools to manage RDS snapshots"
+	app.Version = fmt.Sprintf("1.0.%s", build)
+
+	mainFlag := []cli.Flag{
+		cli.StringFlag{
+			Name:   "aws-access-key",
+			Usage:  "AWS Access Key `AWS_ACCESS_KEY`",
+			EnvVar: "AWS_ACCESS_KEY_ID,AWS_ACCESS_KEY",
+		},
+		cli.StringFlag{
+			Name:   "aws-secret-key",
+			Usage:  "AWS Secret Key `AWS_SECRET_KEY`",
+			EnvVar: "AWS_SECRET_ACCESS_KEY,AWS_SECRET_KEY",
+		},
+		cli.StringFlag{
+			Name:   "aws-region",
+			Usage:  "AWS Region `AWS_REGION`",
+			EnvVar: "PLUGIN_AWS_REGION, AWS_REGION",
+		},
+		cli.StringFlag{
+			Name:   "snapshot-limit",
+			Usage:  "number of snapshot to keep",
+			EnvVar: "PLUGIN_LIMIT",
+		},
+	}
+
+	exportFlag := []cli.Flag{
+		cli.StringFlag{
+			Name:   "file",
+			Usage:  "file to save snapshots list",
+			EnvVar: "PLUGIN_FILE",
+		},
+		cli.StringFlag{
+			Name:   "dbName",
+			Value:  "",
+			Usage:  "origin of snapshots (optional)",
+			EnvVar: "PLUGIN_DBNAME",
+		},
+	}
+
+	app.Commands = []cli.Command{
+		{
+			Name:  "export",
+			Usage: "Export snapshots list to csv file",
+			Flags: append(mainFlag, exportFlag...),
+			Action: func(c *cli.Context) error {
+				file := c.String("file")
+				dbName := c.String("dbName")
+
+				svc := createRdsClient()
+				if dbName != "" {
+					saveCsv(retrieveSnapshots(dbName, svc), file)
+				} else {
+					saveCsv(retrieveAllSnapshots(svc), file)
+					fmt.Println("here")
+				}
+				return nil
+			},
+		},
+	}
+
+	return app
+}
+
 func main() {
 
-	svc := createRdsClient()
+	app := initApp()
+	if err := app.Run(os.Args); err != nil {
+		log.Fatal(err)
+	}
+
+	// svc := createRdsClient()
 
 	// result := retrieveSnapshots("hbpay-production", svc)
 	// saveCsv(result)
-	maintainSnapshots("hbpay-production", svc, 5)
+	// maintainSnapshots("hbpay-production", svc, 5)
+
 }
