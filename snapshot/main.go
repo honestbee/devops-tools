@@ -151,6 +151,20 @@ func initApp() *cli.App {
 		},
 	}
 
+	clearFlag := []cli.Flag{
+		cli.IntFlag{
+			Name:   "limit",
+			Usage:  "number of snapshots to keep",
+			EnvVar: "PLUGIN_LIMIT",
+		},
+		cli.StringFlag{
+			Name:   "dbName",
+			Value:  "",
+			Usage:  "origin of snapshots",
+			EnvVar: "PLUGIN_DBNAME",
+		},
+	}
+
 	app.Commands = []cli.Command{
 		{
 			Name:  "export",
@@ -167,6 +181,18 @@ func initApp() *cli.App {
 					saveCsv(retrieveAllSnapshots(svc), file)
 					fmt.Println("here")
 				}
+				return nil
+			},
+		},
+		{
+			Name:  "clear",
+			Usage: "Clear snapshot of specific dbName and only a specified limit number",
+			Flags: append(mainFlag, clearFlag...),
+			Action: func(c *cli.Context) error {
+				limit := c.Int("limit")
+				dbName := c.String("dbName")
+				svc := createRdsClient()
+				maintainSnapshots(dbName, svc, limit)
 				return nil
 			},
 		},
