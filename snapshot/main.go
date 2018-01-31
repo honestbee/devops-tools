@@ -130,11 +130,6 @@ func initApp() *cli.App {
 			Usage:  "AWS Region `AWS_REGION`",
 			EnvVar: "PLUGIN_AWS_REGION, AWS_REGION",
 		},
-		cli.StringFlag{
-			Name:   "snapshot-limit",
-			Usage:  "number of snapshot to keep",
-			EnvVar: "PLUGIN_LIMIT",
-		},
 	}
 
 	exportFlag := []cli.Flag{
