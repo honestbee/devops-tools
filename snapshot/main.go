@@ -6,6 +6,7 @@ import (
 	"log"
 	"math/rand"
 	"os"
+	"sort"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -101,7 +102,11 @@ func maintainSnapshots(dBInstanceIdentifier string, svc *rds.RDS, limit int) {
 	input := retreiveInstanceManualSnapshots(dBInstanceIdentifier, svc)
 
 	if len(input.DBSnapshots) > limit {
+		sort.SliceStable(input.DBSnapshots, func(i int, j int) bool {
+			return input.DBSnapshots[i].SnapshotCreateTime.Before(*input.DBSnapshots[j].SnapshotCreateTime)
+		})
 		for index := 0; index < len(input.DBSnapshots)-limit; index++ {
+
 			cleanUpSnapshot(input.DBSnapshots[index].DBSnapshotIdentifier, svc)
 		}
 	}
