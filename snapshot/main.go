@@ -54,7 +54,7 @@ func createSnapshot(dBInstanceIdentifier string, svc *rds.RDS, suffix string) *r
 	return result
 }
 
-func retrieveAllSnapshots(svc *rds.RDS) *rds.DescribeDBSnapshotsOutput {
+func retreiveAllManualSnapshots(svc *rds.RDS) *rds.DescribeDBSnapshotsOutput {
 	input := &rds.DescribeDBSnapshotsInput{
 		SnapshotType:  aws.String("manual"),
 		IncludePublic: aws.Bool(true),
@@ -69,7 +69,7 @@ func retrieveAllSnapshots(svc *rds.RDS) *rds.DescribeDBSnapshotsOutput {
 	return result
 }
 
-func retrieveSnapshots(dBInstanceIdentifier string, svc *rds.RDS) *rds.DescribeDBSnapshotsOutput {
+func retreiveInstanceManualSnapshots(dBInstanceIdentifier string, svc *rds.RDS) *rds.DescribeDBSnapshotsOutput {
 	input := &rds.DescribeDBSnapshotsInput{
 		DBInstanceIdentifier: aws.String(dBInstanceIdentifier),
 		SnapshotType:         aws.String("manual"),
@@ -85,7 +85,7 @@ func retrieveSnapshots(dBInstanceIdentifier string, svc *rds.RDS) *rds.DescribeD
 	return result
 }
 
-func cleanUpSnapshots(dBSnapshotIdentifier *string, svc *rds.RDS) {
+func cleanUpSnapshot(dBSnapshotIdentifier *string, svc *rds.RDS) {
 	input := &rds.DeleteDBSnapshotInput{
 		DBSnapshotIdentifier: aws.String(*dBSnapshotIdentifier),
 	}
@@ -98,11 +98,11 @@ func cleanUpSnapshots(dBSnapshotIdentifier *string, svc *rds.RDS) {
 }
 
 func maintainSnapshots(dBInstanceIdentifier string, svc *rds.RDS, limit int) {
-	input := retrieveSnapshots(dBInstanceIdentifier, svc)
+	input := retreiveInstanceManualSnapshots(dBInstanceIdentifier, svc)
 
 	if len(input.DBSnapshots) > limit {
 		for index := 0; index < len(input.DBSnapshots)-limit; index++ {
-			cleanUpSnapshots(input.DBSnapshots[index].DBSnapshotIdentifier, svc)
+			cleanUpSnapshot(input.DBSnapshots[index].DBSnapshotIdentifier, svc)
 		}
 	}
 }
@@ -205,9 +205,9 @@ func initApp() *cli.App {
 
 				svc := createRdsClient()
 				if dbName != "" {
-					saveCsv(retrieveSnapshots(dbName, svc), file)
+					saveCsv(retreiveInstanceManualSnapshots(dbName, svc), file)
 				} else {
-					saveCsv(retrieveAllSnapshots(svc), file)
+					saveCsv(retreiveAllManualSnapshots(svc), file)
 					fmt.Println("here")
 				}
 				return nil
