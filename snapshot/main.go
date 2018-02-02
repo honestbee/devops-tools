@@ -4,6 +4,7 @@ import (
 	"encoding/csv"
 	"fmt"
 	"log"
+	"math/rand"
 	"os"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -21,6 +22,36 @@ func createRdsClient() *rds.RDS {
 
 	svc := rds.New(sess)
 	return svc
+}
+
+func randomString(length int) string {
+	var letters = []rune("abcdefghijklmnopqrstuvwxyz0123456789")
+	b := make([]rune, length)
+	for index := range b {
+		b[index] = letters[rand.Intn(len(letters))]
+	}
+	return string(b)
+}
+
+func createSnapshot(dBInstanceIdentifier string, svc *rds.RDS, suffix string) *rds.CreateDBSnapshotOutput {
+
+	var snapshotName string
+	if suffix == "" {
+		snapshotName = dBInstanceIdentifier + "-" + randomString(8)
+	} else {
+		snapshotName = dBInstanceIdentifier + "-" + suffix
+	}
+
+	input := &rds.CreateDBSnapshotInput{
+		DBInstanceIdentifier: aws.String(dBInstanceIdentifier),
+		DBSnapshotIdentifier: aws.String(snapshotName),
+	}
+	result, err := svc.CreateDBSnapshot(input)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	return result
 }
 
 func retrieveAllSnapshots(svc *rds.RDS) *rds.DescribeDBSnapshotsOutput {
@@ -130,6 +161,12 @@ func initApp() *cli.App {
 			Usage:  "AWS Region `AWS_REGION`",
 			EnvVar: "PLUGIN_AWS_REGION, AWS_REGION",
 		},
+		cli.StringFlag{
+			Name:   "dbName",
+			Value:  "",
+			Usage:  "origin of snapshots",
+			EnvVar: "PLUGIN_DBNAME",
+		},
 	}
 
 	exportFlag := []cli.Flag{
@@ -137,12 +174,6 @@ func initApp() *cli.App {
 			Name:   "file",
 			Usage:  "file to save snapshots list",
 			EnvVar: "PLUGIN_FILE",
-		},
-		cli.StringFlag{
-			Name:   "dbName",
-			Value:  "",
-			Usage:  "origin of snapshots (optional)",
-			EnvVar: "PLUGIN_DBNAME",
 		},
 	}
 
@@ -152,11 +183,14 @@ func initApp() *cli.App {
 			Usage:  "number of snapshots to keep",
 			EnvVar: "PLUGIN_LIMIT",
 		},
+	}
+
+	createFlag := []cli.Flag{
 		cli.StringFlag{
-			Name:   "dbName",
+			Name:   "suffix",
+			Usage:  "suffix to add to snapshot name (if not specified, would be a random string)",
 			Value:  "",
-			Usage:  "origin of snapshots",
-			EnvVar: "PLUGIN_DBNAME",
+			EnvVar: "PLUGIN_SUFFIX",
 		},
 	}
 
@@ -188,6 +222,18 @@ func initApp() *cli.App {
 				dbName := c.String("dbName")
 				svc := createRdsClient()
 				maintainSnapshots(dbName, svc, limit)
+				return nil
+			},
+		},
+		{
+			Name:  "create",
+			Usage: "Create new snapshot and name it with commit SHA",
+			Flags: append(mainFlag, createFlag...),
+			Action: func(c *cli.Context) error {
+				suffix := c.String("suffix")
+				dbName := c.String("dbName")
+				svc := createRdsClient()
+				createSnapshot(dbName, svc, suffix)
 				return nil
 			},
 		},
