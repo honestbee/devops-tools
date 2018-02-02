@@ -141,7 +141,7 @@ func saveCsv(result *rds.DescribeDBSnapshotsOutput, filePath string) {
 
 func initApp() *cli.App {
 	app := cli.NewApp()
-	app.Name = "aws-snapshot-cleanup"
+	app.Name = "rds-snapper"
 	app.Usage = "golang tools to manage RDS snapshots"
 	app.Version = fmt.Sprintf("1.0.%s", build)
 
