@@ -32,23 +32,28 @@ func initApp() *cli.App {
 			EnvVar: "PLUGIN_REGION, AWS_REGION",
 		},
 		cli.StringFlag{
-			Name:   "db_name",
+			Name:   "dbname",
 			Value:  "",
 			Usage:  "origin of snapshots",
 			EnvVar: "PLUGIN_DB_NAME",
 		},
-	}
-
-	exportFlag := []cli.Flag{
+		cli.StringFlag{
+			Name:  "action",
+			Value: "",
+			Usage: "which command to run (export|clear|create)",
+		},
+		cli.StringFlag{
+			Name:   "suffix",
+			Usage:  "suffix to add to snapshot name (if not specified, would be a random string)",
+			Value:  "",
+			EnvVar: "PLUGIN_SUFFIX",
+		},
 		cli.StringFlag{
 			Name:   "file",
 			Value:  "",
 			Usage:  "file to save snapshots list",
 			EnvVar: "PLUGIN_FILE",
 		},
-	}
-
-	clearFlag := []cli.Flag{
 		cli.IntFlag{
 			Name:   "limit",
 			Value:  5,
@@ -57,71 +62,27 @@ func initApp() *cli.App {
 		},
 	}
 
-	createFlag := []cli.Flag{
-		cli.StringFlag{
-			Name:   "suffix",
-			Usage:  "suffix to add to snapshot name (if not specified, would be a random string)",
-			Value:  "",
-			EnvVar: "PLUGIN_SUFFIX",
-		},
-	}
+	app.Action = cli.ActionFunc(defaultAction)
+	app.Flags = mainFlag
 
 	app.Commands = []cli.Command{
 		{
-			Name:  "export",
-			Usage: "Export snapshots list to csv file",
-			Flags: append(mainFlag, exportFlag...),
-			Action: func(c *cli.Context) error {
-				file := c.String("file")
-				dbName := c.String("db_name")
-				accessKey := c.String("aws-access-key")
-				secretKey := c.String("aws-secret-key")
-				region := c.String("aws-region")
-				var err error
-
-				awsConfig := createAwsConfig(accessKey, secretKey, region)
-				svc := createRdsClient(awsConfig)
-				if dbName != "" {
-					err = saveCsv(retrieveInstanceManualSnapshots(dbName, svc), file)
-				} else {
-					err = saveCsv(retrieveAllManualSnapshots(svc), file)
-				}
-				return err
-			},
+			Name:   "export",
+			Usage:  "Export snapshots list to csv file",
+			Flags:  mainFlag,
+			Action: cli.ActionFunc(exportAction),
 		},
 		{
-			Name:  "clear",
-			Usage: "Clear snapshot of specific dbName and only a specified limit number",
-			Flags: append(mainFlag, clearFlag...),
-			Action: func(c *cli.Context) error {
-				limit := c.Int("limit")
-				dbName := c.String("db_name")
-				accessKey := c.String("aws-access-key")
-				secretKey := c.String("aws-secret-key")
-				region := c.String("aws-region")
-
-				awsConfig := createAwsConfig(accessKey, secretKey, region)
-				svc := createRdsClient(awsConfig)
-				maintainSnapshots(dbName, svc, limit)
-				return nil
-			},
+			Name:   "clear",
+			Usage:  "Clear snapshot of specific dbName and only a specified limit number",
+			Flags:  mainFlag,
+			Action: cli.ActionFunc(clearAction),
 		},
 		{
-			Name:  "create",
-			Usage: "Create new snapshot suffix with commit reference",
-			Flags: append(mainFlag, createFlag...),
-			Action: func(c *cli.Context) error {
-				suffix := c.String("suffix")
-				dbName := c.String("db_name")
-				accessKey := c.String("aws-access-key")
-				secretKey := c.String("aws-secret-key")
-				region := c.String("aws-region")
-
-				awsConfig := createAwsConfig(accessKey, secretKey, region)
-				svc := createRdsClient(awsConfig)
-				createSnapshot(dbName, svc, suffix)
-				return nil
-			},
+			Name:   "create",
+			Usage:  "Create new snapshot suffix with commit reference",
+			Flags:  mainFlag,
+			Action: cli.ActionFunc(createAction),
 		},
 	}
 
@@ -135,4 +96,61 @@ func main() {
 		log.Fatal(err)
 	}
 
+}
+
+func defaultAction(c *cli.Context) error {
+	action := c.String("action")
+	switch action {
+	case "export":
+		exportAction(c)
+	case "create":
+		createAction(c)
+	case "clear":
+		clearAction(c)
+	}
+	return nil
+}
+
+func exportAction(c *cli.Context) error {
+	file := c.String("file")
+	dbName := c.String("dbname")
+	accessKey := c.String("aws-access-key")
+	secretKey := c.String("aws-secret-key")
+	region := c.String("aws-region")
+	var err error
+
+	awsConfig := createAwsConfig(accessKey, secretKey, region)
+	svc := createRdsClient(awsConfig)
+	if dbName != "" {
+		err = saveCsv(retrieveInstanceManualSnapshots(dbName, svc), file)
+	} else {
+		err = saveCsv(retrieveAllManualSnapshots(svc), file)
+	}
+	return err
+}
+
+func clearAction(c *cli.Context) error {
+	limit := c.Int("limit")
+	dbName := c.String("dbname")
+	accessKey := c.String("aws-access-key")
+	secretKey := c.String("aws-secret-key")
+	region := c.String("aws-region")
+
+	awsConfig := createAwsConfig(accessKey, secretKey, region)
+	svc := createRdsClient(awsConfig)
+	maintainSnapshots(dbName, svc, limit)
+	return nil
+}
+
+func createAction(c *cli.Context) error {
+	suffix := c.String("suffix")
+	dbName := c.String("dbname")
+	accessKey := c.String("aws-access-key")
+	secretKey := c.String("aws-secret-key")
+	region := c.String("aws-region")
+
+	awsConfig := createAwsConfig(accessKey, secretKey, region)
+	svc := createRdsClient(awsConfig)
+	createSnapshot(dbName, svc, suffix)
+	return nil
 }
