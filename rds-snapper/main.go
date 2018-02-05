@@ -21,8 +21,7 @@ type config struct {
 	Region    string
 }
 
-var build = "0" // build number set at compile-time
-
+// create *aws.Config to use with session
 func createAwsConfig(accessKey string, secretKey string, region string) *aws.Config {
 	conf := config{
 		AccessKey: accessKey,
@@ -30,6 +29,7 @@ func createAwsConfig(accessKey string, secretKey string, region string) *aws.Con
 		Region:    region,
 	}
 
+	// combine many providers in case some is missing
 	creds := credentials.NewChainCredentials([]credentials.Provider{
 		// use static access key & private key if available
 		&credentials.StaticProvider{
@@ -51,9 +51,9 @@ func createAwsConfig(accessKey string, secretKey string, region string) *aws.Con
 	return awsConfig
 }
 
+// create *rds.RDS client from specific *aws.Config
 func createRdsClient(awsConfig *aws.Config) *rds.RDS {
 	sess := session.Must(session.NewSession(awsConfig))
-
 	svc := rds.New(sess)
 	return svc
 }
@@ -131,6 +131,7 @@ func cleanUpSnapshot(dBSnapshotIdentifier *string, svc *rds.RDS) {
 	fmt.Println(result)
 }
 
+// function to maintain specific numbers of snapshot (e.g: limit set to 5, then only keep 5 latest snapshots, delete the others)
 func maintainSnapshots(dbInstanceIdentifier string, svc *rds.RDS, limit int) {
 	input := retrieveInstanceManualSnapshots(dbInstanceIdentifier, svc)
 
@@ -180,7 +181,7 @@ func initApp() *cli.App {
 	app := cli.NewApp()
 	app.Name = "rds-snapper"
 	app.Usage = "golang tools to manage RDS snapshots"
-	app.Version = fmt.Sprintf("1.0.%s", build)
+	app.Version = fmt.Sprintf("1.0.0")
 
 	mainFlag := []cli.Flag{
 		cli.StringFlag{
