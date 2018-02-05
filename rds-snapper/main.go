@@ -9,17 +9,50 @@ import (
 	"sort"
 
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/rds"
 	"github.com/urfave/cli"
 )
 
+type config struct {
+	AccessKey string
+	SecretKey string
+	Region    string
+}
+
 var build = "0" // build number set at compile-time
 
-func createRdsClient() *rds.RDS {
-	sess := session.Must(session.NewSession(&aws.Config{
-		Region: aws.String("ap-southeast-1"),
-	}))
+func createAwsConfig(accessKey string, secretKey string, region string) *aws.Config {
+	conf := config{
+		AccessKey: accessKey,
+		SecretKey: secretKey,
+		Region:    region,
+	}
+
+	creds := credentials.NewChainCredentials([]credentials.Provider{
+		// use static access key & private key if available
+		&credentials.StaticProvider{
+			Value: credentials.Value{
+				AccessKeyID:     conf.AccessKey,
+				SecretAccessKey: conf.SecretKey,
+			},
+		},
+		// fallback to default aws environment variables
+		&credentials.EnvProvider{},
+		// read aws config file $HOME/.aws/credentials
+		&credentials.SharedCredentialsProvider{},
+	})
+
+	awsConfig := aws.NewConfig()
+	awsConfig.WithCredentials(creds)
+	awsConfig.WithRegion(conf.Region)
+
+	return awsConfig
+}
+
+func createRdsClient(awsConfig *aws.Config) *rds.RDS {
+	sess := session.Must(session.NewSession(awsConfig))
 
 	svc := rds.New(sess)
 	return svc
@@ -64,7 +97,7 @@ func retreiveAllManualSnapshots(svc *rds.RDS) *rds.DescribeDBSnapshotsOutput {
 
 	result, err := svc.DescribeDBSnapshots(input)
 	if err != nil {
-		fmt.Println(err)
+		log.Fatal(err)
 	}
 
 	return result
@@ -80,7 +113,7 @@ func retreiveInstanceManualSnapshots(dBInstanceIdentifier string, svc *rds.RDS) 
 
 	result, err := svc.DescribeDBSnapshots(input)
 	if err != nil {
-		fmt.Println(err)
+		log.Fatal(err)
 	}
 
 	return result
@@ -93,7 +126,7 @@ func cleanUpSnapshot(dBSnapshotIdentifier *string, svc *rds.RDS) {
 
 	result, err := svc.DeleteDBSnapshot(input)
 	if err != nil {
-		fmt.Println(err)
+		log.Fatal(err)
 	}
 	fmt.Println(result)
 }
@@ -163,6 +196,7 @@ func initApp() *cli.App {
 		},
 		cli.StringFlag{
 			Name:   "aws-region",
+			Value:  "ap-southeast-1",
 			Usage:  "AWS Region `AWS_REGION`",
 			EnvVar: "PLUGIN_AWS_REGION, AWS_REGION",
 		},
@@ -207,13 +241,16 @@ func initApp() *cli.App {
 			Action: func(c *cli.Context) error {
 				file := c.String("file")
 				dbName := c.String("dbName")
+				accessKey := c.String("aws-access-key")
+				secretKey := c.String("aws-secret-key")
+				region := c.String("aws-region")
 
-				svc := createRdsClient()
+				awsConfig := createAwsConfig(accessKey, secretKey, region)
+				svc := createRdsClient(awsConfig)
 				if dbName != "" {
 					saveCsv(retreiveInstanceManualSnapshots(dbName, svc), file)
 				} else {
 					saveCsv(retreiveAllManualSnapshots(svc), file)
-					fmt.Println("here")
 				}
 				return nil
 			},
@@ -225,7 +262,12 @@ func initApp() *cli.App {
 			Action: func(c *cli.Context) error {
 				limit := c.Int("limit")
 				dbName := c.String("dbName")
-				svc := createRdsClient()
+				accessKey := c.String("aws-access-key")
+				secretKey := c.String("aws-secret-key")
+				region := c.String("aws-region")
+
+				awsConfig := createAwsConfig(accessKey, secretKey, region)
+				svc := createRdsClient(awsConfig)
 				maintainSnapshots(dbName, svc, limit)
 				return nil
 			},
@@ -237,7 +279,12 @@ func initApp() *cli.App {
 			Action: func(c *cli.Context) error {
 				suffix := c.String("suffix")
 				dbName := c.String("dbName")
-				svc := createRdsClient()
+				accessKey := c.String("aws-access-key")
+				secretKey := c.String("aws-secret-key")
+				region := c.String("aws-region")
+
+				awsConfig := createAwsConfig(accessKey, secretKey, region)
+				svc := createRdsClient(awsConfig)
 				createSnapshot(dbName, svc, suffix)
 				return nil
 			},
