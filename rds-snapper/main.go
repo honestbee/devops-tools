@@ -32,10 +32,10 @@ func initApp() *cli.App {
 			EnvVar: "PLUGIN_REGION, AWS_REGION",
 		},
 		cli.StringFlag{
-			Name:   "dbName",
+			Name:   "db_name",
 			Value:  "",
 			Usage:  "origin of snapshots",
-			EnvVar: "PLUGIN_DBNAME",
+			EnvVar: "PLUGIN_DB_NAME",
 		},
 	}
 
@@ -73,7 +73,7 @@ func initApp() *cli.App {
 			Flags: append(mainFlag, exportFlag...),
 			Action: func(c *cli.Context) error {
 				file := c.String("file")
-				dbName := c.String("dbName")
+				dbName := c.String("db_name")
 				accessKey := c.String("aws-access-key")
 				secretKey := c.String("aws-secret-key")
 				region := c.String("aws-region")
@@ -95,7 +95,7 @@ func initApp() *cli.App {
 			Flags: append(mainFlag, clearFlag...),
 			Action: func(c *cli.Context) error {
 				limit := c.Int("limit")
-				dbName := c.String("dbName")
+				dbName := c.String("db_name")
 				accessKey := c.String("aws-access-key")
 				secretKey := c.String("aws-secret-key")
 				region := c.String("aws-region")
@@ -112,7 +112,7 @@ func initApp() *cli.App {
 			Flags: append(mainFlag, createFlag...),
 			Action: func(c *cli.Context) error {
 				suffix := c.String("suffix")
-				dbName := c.String("dbName")
+				dbName := c.String("db_name")
 				accessKey := c.String("aws-access-key")
 				secretKey := c.String("aws-secret-key")
 				region := c.String("aws-region")
