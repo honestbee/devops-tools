@@ -175,7 +175,6 @@ func saveCsv(result *rds.DescribeDBSnapshotsOutput, filePath string) error {
 			return err
 		}
 	}
-
 	// Write any buffered data to the underlying writer (standard output).
 	w.Flush()
 
@@ -253,15 +252,16 @@ func initApp() *cli.App {
 				accessKey := c.String("aws-access-key")
 				secretKey := c.String("aws-secret-key")
 				region := c.String("aws-region")
+				var err error
 
 				awsConfig := createAwsConfig(accessKey, secretKey, region)
 				svc := createRdsClient(awsConfig)
 				if dbName != "" {
-					saveCsv(retrieveInstanceManualSnapshots(dbName, svc), file)
+					err = saveCsv(retrieveInstanceManualSnapshots(dbName, svc), file)
 				} else {
-					saveCsv(retrieveAllManualSnapshots(svc), file)
+					err = saveCsv(retrieveAllManualSnapshots(svc), file)
 				}
-				return nil
+				return err
 			},
 		},
 		{
