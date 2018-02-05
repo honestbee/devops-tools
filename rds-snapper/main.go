@@ -108,6 +108,8 @@ func defaultAction(c *cli.Context) error {
 		createAction(c)
 	case "clear":
 		clearAction(c)
+	default:
+		log.Fatal("action not valid!")
 	}
 	return nil
 }
