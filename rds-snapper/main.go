@@ -145,36 +145,44 @@ func maintainSnapshots(dbInstanceIdentifier string, svc *rds.RDS, limit int) {
 	}
 }
 
-func saveCsv(result *rds.DescribeDBSnapshotsOutput, filePath string) {
+func saveCsv(result *rds.DescribeDBSnapshotsOutput, filePath string) error {
 	records := [][]string{}
+	// predefine writer
+	var w *csv.Writer
 
 	for index := 0; index < len(result.DBSnapshots); index++ {
 		record := result.DBSnapshots[index]
 		records = append(records, []string{record.SnapshotCreateTime.String(), *record.DBInstanceIdentifier, *record.DBSnapshotIdentifier})
 	}
 
-	outfile, err := os.Create(filePath)
-	if err != nil {
-		log.Fatal("Unable to open output")
+	if filePath != "" {
+		outfile, err := os.Create(filePath)
+		if err != nil {
+			return err
+		}
+		defer outfile.Close()
+		w = csv.NewWriter(outfile)
+	} else {
+		// writing to stdout if filepath is not specified
+		w = csv.NewWriter(os.Stdout)
 	}
-	defer outfile.Close()
-
-	w := csv.NewWriter(outfile)
 
 	w.Write([]string{"dateCreated", "DBInstanceIdentifier", "DBSnapshotIdentifier"})
 
 	for _, record := range records {
 		if err := w.Write(record); err != nil {
-			log.Fatalln("error writing record to csv:", err)
+			fmt.Println("error writing record to csv:", err)
+			return err
 		}
 	}
 
 	// Write any buffered data to the underlying writer (standard output).
 	w.Flush()
 
-	if err := w.Error(); err != nil {
-		log.Fatal(err)
+	if w.Error() != nil {
+		return w.Error()
 	}
+	return nil
 }
 
 func initApp() *cli.App {
@@ -211,6 +219,7 @@ func initApp() *cli.App {
 	exportFlag := []cli.Flag{
 		cli.StringFlag{
 			Name:   "file",
+			Value:  "",
 			Usage:  "file to save snapshots list",
 			EnvVar: "PLUGIN_FILE",
 		},
