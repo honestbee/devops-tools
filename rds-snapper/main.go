@@ -67,17 +67,17 @@ func randomString(length int) string {
 	return string(b)
 }
 
-func createSnapshot(dBInstanceIdentifier string, svc *rds.RDS, suffix string) *rds.CreateDBSnapshotOutput {
+func createSnapshot(dbInstanceIdentifier string, svc *rds.RDS, suffix string) *rds.CreateDBSnapshotOutput {
 
 	var snapshotName string
 	if suffix == "" {
-		snapshotName = dBInstanceIdentifier + "-" + randomString(8)
+		snapshotName = dbInstanceIdentifier + "-" + randomString(8)
 	} else {
-		snapshotName = dBInstanceIdentifier + "-" + suffix
+		snapshotName = dbInstanceIdentifier + "-" + suffix
 	}
 
 	input := &rds.CreateDBSnapshotInput{
-		DBInstanceIdentifier: aws.String(dBInstanceIdentifier),
+		DBInstanceIdentifier: aws.String(dbInstanceIdentifier),
 		DBSnapshotIdentifier: aws.String(snapshotName),
 	}
 	result, err := svc.CreateDBSnapshot(input)
@@ -103,9 +103,9 @@ func retrieveAllManualSnapshots(svc *rds.RDS) *rds.DescribeDBSnapshotsOutput {
 	return result
 }
 
-func retrieveInstanceManualSnapshots(dBInstanceIdentifier string, svc *rds.RDS) *rds.DescribeDBSnapshotsOutput {
+func retrieveInstanceManualSnapshots(dbInstanceIdentifier string, svc *rds.RDS) *rds.DescribeDBSnapshotsOutput {
 	input := &rds.DescribeDBSnapshotsInput{
-		DBInstanceIdentifier: aws.String(dBInstanceIdentifier),
+		DBInstanceIdentifier: aws.String(dbInstanceIdentifier),
 		SnapshotType:         aws.String("manual"),
 		IncludePublic:        aws.Bool(true),
 		IncludeShared:        aws.Bool(true),
@@ -131,8 +131,8 @@ func cleanUpSnapshot(dBSnapshotIdentifier *string, svc *rds.RDS) {
 	fmt.Println(result)
 }
 
-func maintainSnapshots(dBInstanceIdentifier string, svc *rds.RDS, limit int) {
-	input := retrieveInstanceManualSnapshots(dBInstanceIdentifier, svc)
+func maintainSnapshots(dbInstanceIdentifier string, svc *rds.RDS, limit int) {
+	input := retrieveInstanceManualSnapshots(dbInstanceIdentifier, svc)
 
 	if len(input.DBSnapshots) > limit {
 		sort.SliceStable(input.DBSnapshots, func(i int, j int) bool {
