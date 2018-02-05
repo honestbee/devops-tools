@@ -35,7 +35,7 @@ func initApp() *cli.App {
 			Name:   "dbname",
 			Value:  "",
 			Usage:  "origin of snapshots",
-			EnvVar: "PLUGIN_DB_NAME",
+			EnvVar: "PLUGIN_DB_NAME,PLUGIN_DBNAME",
 		},
 		cli.StringFlag{
 			Name:  "action",
