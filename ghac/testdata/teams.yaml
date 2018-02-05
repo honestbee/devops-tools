@@ -3,6 +3,7 @@ teams:
   name: Test team1
   description: test team1
   slug: test-team1
+  namespace: test
   user_roles:
     admin1: maintainer
     admin2: maintainer
@@ -11,6 +12,7 @@ teams:
   name: Test team2
   description: test team2
   slug: test-team2
+  namespace: test2
   privacy: secret
   user_roles:
     admin1: maintainer

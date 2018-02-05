@@ -5,6 +5,7 @@ resource "github_team" "{{.Slug}}" {
   # Test Prefix: {{ .SlugPrefix }}
   # Test Suffix: {{ .SlugSuffix }}
   # Test Sprig.default: {{ default "foo" .Privacy }} 
+  # Test Namespace: {{ .Namespace }}
 }
 {{ range $user, $role := .UserRoles }}
 resource "github_team_membership" "{{ $.Slug }}-{{ $user }}" {
