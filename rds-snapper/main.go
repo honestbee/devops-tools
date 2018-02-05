@@ -133,6 +133,9 @@ func cleanUpSnapshot(dBSnapshotIdentifier *string, svc *rds.RDS) {
 
 // function to maintain specific numbers of snapshot (e.g: limit set to 5, then only keep 5 latest snapshots, delete the others)
 func maintainSnapshots(dbInstanceIdentifier string, svc *rds.RDS, limit int) {
+	if dbInstanceIdentifier == "" {
+		log.Fatal("dbInstanceIdentifier need to be defined!")
+	}
 	input := retrieveInstanceManualSnapshots(dbInstanceIdentifier, svc)
 
 	if len(input.DBSnapshots) > limit {
@@ -227,6 +230,7 @@ func initApp() *cli.App {
 	clearFlag := []cli.Flag{
 		cli.IntFlag{
 			Name:   "limit",
+			Value:  5,
 			Usage:  "number of snapshots to keep",
 			EnvVar: "PLUGIN_LIMIT",
 		},
