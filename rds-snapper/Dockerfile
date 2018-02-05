@@ -19,4 +19,4 @@ RUN set -ex \
   && apk add --no-cache bash ca-certificates git
 
 COPY --from=builder /rds-snapper /bin/rds-snapper
-ENTRYPOINT [ "/bin/rds-snapper", "clear" ]
+ENTRYPOINT [ "/bin/rds-snapper" ]
