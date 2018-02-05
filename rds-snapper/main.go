@@ -38,9 +38,10 @@ func initApp() *cli.App {
 			EnvVar: "PLUGIN_DB_NAME,PLUGIN_DBNAME",
 		},
 		cli.StringFlag{
-			Name:  "action",
-			Value: "",
-			Usage: "which command to run (export|clear|create)",
+			Name:   "action",
+			Value:  "",
+			Usage:  "which command to run (export|clear|create)",
+			EnvVar: "PLUGIN_ACTION",
 		},
 		cli.StringFlag{
 			Name:   "suffix",
