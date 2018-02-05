@@ -283,7 +283,7 @@ func initApp() *cli.App {
 		},
 		{
 			Name:  "create",
-			Usage: "Create new snapshot and name it with commit SHA",
+			Usage: "Create new snapshot suffix with commit reference",
 			Flags: append(mainFlag, createFlag...),
 			Action: func(c *cli.Context) error {
 				suffix := c.String("suffix")
