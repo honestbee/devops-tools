@@ -139,7 +139,6 @@ func maintainSnapshots(dbInstanceIdentifier string, svc *rds.RDS, limit int) {
 			return input.DBSnapshots[i].SnapshotCreateTime.Before(*input.DBSnapshots[j].SnapshotCreateTime)
 		})
 		for index := 0; index < len(input.DBSnapshots)-limit; index++ {
-
 			cleanUpSnapshot(input.DBSnapshots[index].DBSnapshotIdentifier, svc)
 		}
 	}
