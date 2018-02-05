@@ -88,7 +88,7 @@ func createSnapshot(dBInstanceIdentifier string, svc *rds.RDS, suffix string) *r
 	return result
 }
 
-func retreiveAllManualSnapshots(svc *rds.RDS) *rds.DescribeDBSnapshotsOutput {
+func retrieveAllManualSnapshots(svc *rds.RDS) *rds.DescribeDBSnapshotsOutput {
 	input := &rds.DescribeDBSnapshotsInput{
 		SnapshotType:  aws.String("manual"),
 		IncludePublic: aws.Bool(true),
@@ -103,7 +103,7 @@ func retreiveAllManualSnapshots(svc *rds.RDS) *rds.DescribeDBSnapshotsOutput {
 	return result
 }
 
-func retreiveInstanceManualSnapshots(dBInstanceIdentifier string, svc *rds.RDS) *rds.DescribeDBSnapshotsOutput {
+func retrieveInstanceManualSnapshots(dBInstanceIdentifier string, svc *rds.RDS) *rds.DescribeDBSnapshotsOutput {
 	input := &rds.DescribeDBSnapshotsInput{
 		DBInstanceIdentifier: aws.String(dBInstanceIdentifier),
 		SnapshotType:         aws.String("manual"),
@@ -132,7 +132,7 @@ func cleanUpSnapshot(dBSnapshotIdentifier *string, svc *rds.RDS) {
 }
 
 func maintainSnapshots(dBInstanceIdentifier string, svc *rds.RDS, limit int) {
-	input := retreiveInstanceManualSnapshots(dBInstanceIdentifier, svc)
+	input := retrieveInstanceManualSnapshots(dBInstanceIdentifier, svc)
 
 	if len(input.DBSnapshots) > limit {
 		sort.SliceStable(input.DBSnapshots, func(i int, j int) bool {
@@ -248,9 +248,9 @@ func initApp() *cli.App {
 				awsConfig := createAwsConfig(accessKey, secretKey, region)
 				svc := createRdsClient(awsConfig)
 				if dbName != "" {
-					saveCsv(retreiveInstanceManualSnapshots(dbName, svc), file)
+					saveCsv(retrieveInstanceManualSnapshots(dbName, svc), file)
 				} else {
-					saveCsv(retreiveAllManualSnapshots(svc), file)
+					saveCsv(retrieveAllManualSnapshots(svc), file)
 				}
 				return nil
 			},
