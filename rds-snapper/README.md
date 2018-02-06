@@ -18,17 +18,18 @@ VERSION:
    1.0.0
 
 COMMANDS:
-     export   Export snapshots list to csv file
-     clear    Clear snapshot of specific dbName and only a specified limit number
-     create   Create new snapshot and name it with commit SHA
-     help, h  Shows a list of commands or help for one command
+     export    Export snapshots list to csv file or stdout
+     clear     Clear snapshot of specific dbname and only a specified limit number
+     create    Create new snapshot
+     maintain  Combine `clear` and `create`
+     help, h   Shows a list of commands or help for one command
 ```
 
 #### Export
 
 ```bash
 NAME:
-   rds-snapper export - Export snapshots list to csv file
+   rds-snapper export - Export snapshots list to csv file or stdout
 
 USAGE:
    rds-snapper export [command options] [arguments...]
@@ -42,7 +43,7 @@ EXAMPLE:
 
 ```bash
 NAME:
-   rds-snapper clear - Keep specified number of snapshots and clean up the rest
+   rds-snapper clear - Clear snapshot of specific dbname and only a specified limit number
 
 USAGE:
    rds-snapper clear [command options] [arguments...]
@@ -56,7 +57,7 @@ EXAMPLE:
 
 ```bash
 NAME:
-   rds-snapper create - Create new snapshot and name it with commit SHA
+   rds-snapper create - Create new snapshot
 
 USAGE:
    rds-snapper create [command options] [arguments...]
@@ -64,6 +65,21 @@ USAGE:
 EXAMPLE:
    # Create new snapshot named "hb-staging-aaeec89" for hb-staging rds instance, the suffix here is github commit reference.
    rds-snapper create --dbname "hb-staging" --suffix "aaeec89"
+```
+
+#### Maintain
+
+```bash
+NAME:
+   rds-snapper maintain - Combine `clear` and `create`
+
+USAGE:
+   rds-snapper maintain [command options] [arguments...]
+
+EXAMPLE:
+  # Clean up hb-staging rds's snapshots, only keep 5 latest copy, after that \
+  # create new snapshot named "hb-staging-aaeec89" for hb-staging rds instance, the suffix here is github commit reference.
+  rds-snapper create maintain --dbname "hb-staging" --suffix "aaeec89" --limit 5
 ```
 
 ### Drone use case
@@ -89,8 +105,8 @@ EXAMPLE:
         target: aws_access_key_id
       - source: snapshot_aws_secret_access_key
         target: aws_secret_access_key
-    dbname: "<db-name>"
     action: "clear"
+    dbname: "<db-name>"
     limit: <number-to-keep>
 
   # Create new <db-name> snapshot
@@ -102,7 +118,22 @@ EXAMPLE:
         target: aws_access_key_id
       - source: snapshot_aws_secret_access_key
         target: aws_secret_access_key
-    dbname: "<db-name>"
     action: "create"
-    suffix: ${DRONE_COMMIT_SHA:0:8}
+    dbname: "<db-name>"
+    suffix: "<snapshot-name-suffix>"
+
+  # Clear <db-name>'s snapshots and keep only <limit> latest copies
+  # Create new <db-name> snapshot
+  maintain-snapshot:
+    image: quay.io/honestbee/rds-snapper
+    pull: true
+    secrets:
+      - source: snapshot_aws_access_key_id
+        target: aws_access_key_id
+      - source: snapshot_aws_secret_access_key
+        target: aws_secret_access_key
+    action: "maintain"
+    dbname: "<db-name>"
+    suffix: "<snapshot-name-suffix>"
+    limit: <number-to-keep>
 ```

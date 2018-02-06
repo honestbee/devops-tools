@@ -159,3 +159,12 @@ func createAction(c *cli.Context) error {
 	createSnapshot(conf.DbName, svc, suffix)
 	return nil
 }
+
+func maintainAction(c *cli.Context) error {
+	limit := c.Int("limit")
+	suffix := c.String("suffix")
+	conf, svc := initAction(c)
+	maintainSnapshots(conf.DbName, svc, limit)
+	createSnapshot(conf.DbName, svc, suffix)
+	return nil
+}
