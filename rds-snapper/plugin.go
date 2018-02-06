@@ -7,6 +7,7 @@ import (
 	"math/rand"
 	"os"
 	"sort"
+	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"
@@ -19,6 +20,15 @@ type config struct {
 	SecretKey string
 	Region    string
 }
+
+var src = rand.NewSource(time.Now().UnixNano())
+
+const letterBytes = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+const (
+	letterIdxBits = 6                    // 6 bits to represent a letter index
+	letterIdxMask = 1<<letterIdxBits - 1 // All 1-bits, as many as letterIdxBits
+	letterIdxMax  = 63 / letterIdxBits   // # of letter indices fitting in 63 bits
+)
 
 // create *aws.Config to use with session
 func createAwsConfig(accessKey string, secretKey string, region string) *aws.Config {
@@ -57,12 +67,22 @@ func createRdsClient(awsConfig *aws.Config) *rds.RDS {
 	return svc
 }
 
-func randomString(length int) string {
-	var letters = []rune("abcdefghijklmnopqrstuvwxyz0123456789")
-	b := make([]rune, length)
-	for index := range b {
-		b[index] = letters[rand.Intn(len(letters))]
+// https://stackoverflow.com/a/31832326/2490986
+func randomString(n int) string {
+	b := make([]byte, n)
+	// A src.Int63() generates 63 random bits, enough for letterIdxMax characters!
+	for i, cache, remain := n-1, src.Int63(), letterIdxMax; i >= 0; {
+		if remain == 0 {
+			cache, remain = src.Int63(), letterIdxMax
+		}
+		if idx := int(cache & letterIdxMask); idx < len(letterBytes) {
+			b[i] = letterBytes[idx]
+			i--
+		}
+		cache >>= letterIdxBits
+		remain--
 	}
+
 	return string(b)
 }
 
