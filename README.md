@@ -4,10 +4,10 @@ Misc Devops Tools used by Honestbee
 
 ## Golang Dependency management
 
-Using glide, get all vendored dependencies with:
+Using dep, get all vendored dependencies with:
 
-```
-glide up
+```bash
+dep ensure
 ```
 
 # Index
