@@ -49,7 +49,7 @@ USAGE:
 
 EXAMPLE:
    # Clean up hb-staging rds's snapshots, only keep 5 latest copy.
-   rds-snapper clear --dbName "hb-staging" --limit "5"
+   rds-snapper clear --dbname "hb-staging" --limit "5"
 ```
 
 #### Create
@@ -63,7 +63,7 @@ USAGE:
 
 EXAMPLE:
    # Create new snapshot named "hb-staging-aaeec89" for hb-staging rds instance, the suffix here is github commit reference.
-   rds-snapper create --dbName "hb-staging" --suffix "aaeec89"
+   rds-snapper create --dbname "hb-staging" --suffix "aaeec89"
 ```
 
 ### Drone use case

@@ -52,7 +52,7 @@ func initApp() *cli.App {
 		cli.StringFlag{
 			Name:   "file",
 			Value:  "",
-			Usage:  "file to save snapshots list",
+			Usage:  "file to save snapshots list (fallback to stdout if not specified)",
 			EnvVar: "PLUGIN_FILE",
 		},
 		cli.IntFlag{
@@ -69,19 +69,19 @@ func initApp() *cli.App {
 	app.Commands = []cli.Command{
 		{
 			Name:   "export",
-			Usage:  "Export snapshots list to csv file",
+			Usage:  "Export snapshots list to csv file or stdout",
 			Flags:  mainFlag,
 			Action: cli.ActionFunc(exportAction),
 		},
 		{
 			Name:   "clear",
-			Usage:  "Clear snapshot of specific dbName and only a specified limit number",
+			Usage:  "Clear snapshot of specific dbname and only a specified limit number",
 			Flags:  mainFlag,
 			Action: cli.ActionFunc(clearAction),
 		},
 		{
 			Name:   "create",
-			Usage:  "Create new snapshot suffix with commit reference",
+			Usage:  "Create new snapshot",
 			Flags:  mainFlag,
 			Action: cli.ActionFunc(createAction),
 		},
