@@ -41,7 +41,7 @@ func initApp() *cli.App {
 		cli.StringFlag{
 			Name:   "action",
 			Value:  "",
-			Usage:  "which command to run (export|clear|create)",
+			Usage:  "which command to run (export|clear|create|maintain)",
 			EnvVar: "PLUGIN_ACTION",
 		},
 		cli.StringFlag{
@@ -86,6 +86,12 @@ func initApp() *cli.App {
 			Flags:  mainFlag,
 			Action: cli.ActionFunc(createAction),
 		},
+		{
+			Name:   "maintain",
+			Usage:  "Combine `clear` and `create`",
+			Flags:  mainFlag,
+			Action: cli.ActionFunc(maintainAction),
+		},
 	}
 
 	return app
@@ -109,6 +115,8 @@ func defaultAction(c *cli.Context) error {
 		createAction(c)
 	case "clear":
 		clearAction(c)
+	case "maintain":
+		maintainAction(c)
 	default:
 		log.Fatal("action not valid!")
 	}
