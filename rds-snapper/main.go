@@ -124,10 +124,14 @@ func exportAction(c *cli.Context) error {
 
 	awsConfig := createAwsConfig(accessKey, secretKey, region)
 	svc := createRdsClient(awsConfig)
+	output, err := createWriter(file)
+	if err != nil {
+		return err
+	}
 	if dbName != "" {
-		err = saveCsv(retrieveInstanceManualSnapshots(dbName, svc), file)
+		err = saveCsv(retrieveInstanceManualSnapshots(dbName, svc), output)
 	} else {
-		err = saveCsv(retrieveAllManualSnapshots(svc), file)
+		err = saveCsv(retrieveAllManualSnapshots(svc), output)
 	}
 	return err
 }

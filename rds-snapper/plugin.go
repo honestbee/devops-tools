@@ -167,26 +167,24 @@ func maintainSnapshots(dbInstanceIdentifier string, svc *rds.RDS, limit int) {
 	}
 }
 
-func saveCsv(result *rds.DescribeDBSnapshotsOutput, filePath string) error {
+func createWriter(output string) (*csv.Writer, error) {
+	if output != "" {
+		outfile, err := os.Create(output)
+		if err != nil {
+			return nil, err
+		}
+		defer outfile.Close()
+		return csv.NewWriter(outfile), nil
+	}
+	return csv.NewWriter(os.Stdout), nil
+}
+
+func saveCsv(result *rds.DescribeDBSnapshotsOutput, w *csv.Writer) error {
 	records := [][]string{}
-	// predefine writer
-	var w *csv.Writer
 
 	for index := 0; index < len(result.DBSnapshots); index++ {
 		record := result.DBSnapshots[index]
 		records = append(records, []string{record.SnapshotCreateTime.String(), *record.DBInstanceIdentifier, *record.DBSnapshotIdentifier})
-	}
-
-	if filePath != "" {
-		outfile, err := os.Create(filePath)
-		if err != nil {
-			return err
-		}
-		defer outfile.Close()
-		w = csv.NewWriter(outfile)
-	} else {
-		// writing to stdout if filepath is not specified
-		w = csv.NewWriter(os.Stdout)
 	}
 
 	w.Write([]string{"dateCreated", "DBInstanceIdentifier", "DBSnapshotIdentifier"})
