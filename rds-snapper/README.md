@@ -5,6 +5,8 @@ This is designed to run during `drone pipeline` in which we could cleanup old sn
 
 ## Usage
 
+### Commandline use case
+
 ```bash
 NAME:
    rds-snapper - golang tools to manage RDS snapshots
@@ -22,7 +24,7 @@ COMMANDS:
      help, h  Shows a list of commands or help for one command
 ```
 
-### Export
+#### Export
 
 ```bash
 NAME:
@@ -36,8 +38,7 @@ EXAMPLE:
    rds-snapper export --file "output.csv"
 ```
 
-
-### Clear
+#### Clear
 
 ```bash
 NAME:
@@ -51,7 +52,7 @@ EXAMPLE:
    rds-snapper clear --dbName "hb-staging" --limit "5"
 ```
 
-### Create
+#### Create
 
 ```bash
 NAME:
@@ -63,4 +64,45 @@ USAGE:
 EXAMPLE:
    # Create new snapshot named "hb-staging-aaeec89" for hb-staging rds instance, the suffix here is github commit reference.
    rds-snapper create --dbName "hb-staging" --suffix "aaeec89"
+```
+
+### Drone use case
+
+```yaml
+  # print list of snapshots to stdout
+  export-snapshot:
+    image: quay.io/honestbee/rds-snapper
+    pull: true
+    secrets:
+      - source: snapshot_aws_access_key_id
+        target: aws_access_key_id
+      - source: snapshot_aws_secret_access_key
+        target: aws_secret_access_key
+    action: "export"
+
+  # Clear <db-name>'s snapshots and keep only <limit> latest copies
+  clear-snapshot:
+    image: quay.io/honestbee/rds-snapper
+    pull: true
+    secrets:
+      - source: snapshot_aws_access_key_id
+        target: aws_access_key_id
+      - source: snapshot_aws_secret_access_key
+        target: aws_secret_access_key
+    dbname: "<db-name>"
+    action: "clear"
+    limit: <number-to-keep>
+
+  # Create new <db-name> snapshot
+  create-snapshot:
+    image: quay.io/honestbee/rds-snapper
+    pull: true
+    secrets:
+      - source: snapshot_aws_access_key_id
+        target: aws_access_key_id
+      - source: snapshot_aws_secret_access_key
+        target: aws_secret_access_key
+    dbname: "<db-name>"
+    action: "create"
+    suffix: ${DRONE_COMMIT_SHA:0:8}
 ```
