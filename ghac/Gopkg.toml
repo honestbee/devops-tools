@@ -1,0 +1,15 @@
+[[constraint]]
+  name = "github.com/Masterminds/sprig"
+  version = "2.14.1"
+
+[[constraint]]
+  name = "github.com/sirupsen/logrus"
+  version = "1.0.4"
+
+[[constraint]]
+  name = "github.com/urfave/cli"
+  version = "1.20.0"
+
+[prune]
+  go-tests = true
+  unused-packages = true

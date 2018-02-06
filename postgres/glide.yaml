@@ -1,4 +1,0 @@
-package: github.com/honestbee/devops-tools/postgres
-import:
-- package: github.com/urfave/cli
-  version: ^1.20.0
