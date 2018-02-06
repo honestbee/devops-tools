@@ -19,6 +19,10 @@ type config struct {
 	AccessKey string
 	SecretKey string
 	Region    string
+	Limit     int
+	DbName    string
+	Suffix    string
+	file      string
 }
 
 var src = rand.NewSource(time.Now().UnixNano())
@@ -32,19 +36,13 @@ const (
 
 // create *aws.Config to use with session
 func createAwsConfig(accessKey string, secretKey string, region string) *aws.Config {
-	conf := config{
-		AccessKey: accessKey,
-		SecretKey: secretKey,
-		Region:    region,
-	}
-
 	// combine many providers in case some is missing
 	creds := credentials.NewChainCredentials([]credentials.Provider{
 		// use static access key & private key if available
 		&credentials.StaticProvider{
 			Value: credentials.Value{
-				AccessKeyID:     conf.AccessKey,
-				SecretAccessKey: conf.SecretKey,
+				AccessKeyID:     accessKey,
+				SecretAccessKey: secretKey,
 			},
 		},
 		// fallback to default aws environment variables
@@ -55,7 +53,7 @@ func createAwsConfig(accessKey string, secretKey string, region string) *aws.Con
 
 	awsConfig := aws.NewConfig()
 	awsConfig.WithCredentials(creds)
-	awsConfig.WithRegion(conf.Region)
+	awsConfig.WithRegion(region)
 
 	return awsConfig
 }

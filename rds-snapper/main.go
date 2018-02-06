@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 
+	"github.com/aws/aws-sdk-go/service/rds"
 	"github.com/urfave/cli"
 )
 
@@ -114,22 +115,31 @@ func defaultAction(c *cli.Context) error {
 	return nil
 }
 
+func initAction(c *cli.Context) (config, *rds.RDS) {
+	var conf config
+	conf.DbName = c.String("dbname")
+	conf.AccessKey = c.String("aws-access-key")
+	conf.SecretKey = c.String("aws-secret-key")
+	conf.Region = c.String("aws-region")
+	awsConfig := createAwsConfig(conf.AccessKey, conf.SecretKey, conf.Region)
+	svc := createRdsClient(awsConfig)
+
+	return conf, svc
+}
+
 func exportAction(c *cli.Context) error {
+
 	file := c.String("file")
-	dbName := c.String("dbname")
-	accessKey := c.String("aws-access-key")
-	secretKey := c.String("aws-secret-key")
-	region := c.String("aws-region")
+	conf, svc := initAction(c)
+
 	var err error
 
-	awsConfig := createAwsConfig(accessKey, secretKey, region)
-	svc := createRdsClient(awsConfig)
 	output, err := createWriter(file)
 	if err != nil {
 		return err
 	}
-	if dbName != "" {
-		err = saveCsv(retrieveInstanceManualSnapshots(dbName, svc), output)
+	if conf.DbName != "" {
+		err = saveCsv(retrieveInstanceManualSnapshots(conf.DbName, svc), output)
 	} else {
 		err = saveCsv(retrieveAllManualSnapshots(svc), output)
 	}
@@ -138,26 +148,14 @@ func exportAction(c *cli.Context) error {
 
 func clearAction(c *cli.Context) error {
 	limit := c.Int("limit")
-	dbName := c.String("dbname")
-	accessKey := c.String("aws-access-key")
-	secretKey := c.String("aws-secret-key")
-	region := c.String("aws-region")
-
-	awsConfig := createAwsConfig(accessKey, secretKey, region)
-	svc := createRdsClient(awsConfig)
-	maintainSnapshots(dbName, svc, limit)
+	conf, svc := initAction(c)
+	maintainSnapshots(conf.DbName, svc, limit)
 	return nil
 }
 
 func createAction(c *cli.Context) error {
 	suffix := c.String("suffix")
-	dbName := c.String("dbname")
-	accessKey := c.String("aws-access-key")
-	secretKey := c.String("aws-secret-key")
-	region := c.String("aws-region")
-
-	awsConfig := createAwsConfig(accessKey, secretKey, region)
-	svc := createRdsClient(awsConfig)
-	createSnapshot(dbName, svc, suffix)
+	conf, svc := initAction(c)
+	createSnapshot(conf.DbName, svc, suffix)
 	return nil
 }
