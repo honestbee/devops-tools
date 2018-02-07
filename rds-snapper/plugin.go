@@ -22,7 +22,6 @@ type config struct {
 	Limit     int
 	DbName    string
 	Suffix    string
-	file      string
 }
 
 var src = rand.NewSource(time.Now().UnixNano())
@@ -136,7 +135,7 @@ func retrieveInstanceManualSnapshots(dbInstanceIdentifier string, svc *rds.RDS) 
 	return result
 }
 
-func cleanUpSnapshot(dBSnapshotIdentifier *string, svc *rds.RDS) {
+func deleteSnapshot(dBSnapshotIdentifier *string, svc *rds.RDS) {
 	input := &rds.DeleteDBSnapshotInput{
 		DBSnapshotIdentifier: aws.String(*dBSnapshotIdentifier),
 	}
@@ -148,19 +147,19 @@ func cleanUpSnapshot(dBSnapshotIdentifier *string, svc *rds.RDS) {
 	fmt.Println(result)
 }
 
-// function to maintain specific numbers of snapshot (e.g: limit set to 5, then only keep 5 latest snapshots, delete the others)
-func maintainSnapshots(dbInstanceIdentifier string, svc *rds.RDS, limit int) {
+// function to maintain specific numbers of snapshot (e.g: keep set to 5, then only keep 5 latest snapshots, delete the others)
+func clearSnapshots(dbInstanceIdentifier string, svc *rds.RDS, keep int) {
 	if dbInstanceIdentifier == "" {
 		log.Fatal("dbInstanceIdentifier need to be defined!")
 	}
 	input := retrieveInstanceManualSnapshots(dbInstanceIdentifier, svc)
 
-	if len(input.DBSnapshots) > limit {
+	if len(input.DBSnapshots) > keep && keep > 0 {
 		sort.SliceStable(input.DBSnapshots, func(i int, j int) bool {
 			return input.DBSnapshots[i].SnapshotCreateTime.Before(*input.DBSnapshots[j].SnapshotCreateTime)
 		})
-		for index := 0; index < len(input.DBSnapshots)-limit; index++ {
-			cleanUpSnapshot(input.DBSnapshots[index].DBSnapshotIdentifier, svc)
+		for index := 0; index < len(input.DBSnapshots)-keep; index++ {
+			deleteSnapshot(input.DBSnapshots[index].DBSnapshotIdentifier, svc)
 		}
 	}
 }

@@ -41,7 +41,7 @@ func initApp() *cli.App {
 		cli.StringFlag{
 			Name:   "action",
 			Value:  "",
-			Usage:  "which command to run (export|clear|create|maintain)",
+			Usage:  "which command to run (export|clear|create)",
 			EnvVar: "PLUGIN_ACTION",
 		},
 		cli.StringFlag{
@@ -57,10 +57,9 @@ func initApp() *cli.App {
 			EnvVar: "PLUGIN_FILE",
 		},
 		cli.IntFlag{
-			Name:   "limit",
-			Value:  5,
-			Usage:  "number of snapshots to keep",
-			EnvVar: "PLUGIN_LIMIT",
+			Name:   "keep",
+			Usage:  "number of snapshots to keep (would be ignored if `keep` is set)",
+			EnvVar: "PLUGIN_KEEP",
 		},
 	}
 
@@ -76,7 +75,7 @@ func initApp() *cli.App {
 		},
 		{
 			Name:   "clear",
-			Usage:  "Clear snapshot of specific dbname and only a specified limit number",
+			Usage:  "Clear snapshot of specific dbname and keep only a specified number of snapshots",
 			Flags:  mainFlag,
 			Action: cli.ActionFunc(clearAction),
 		},
@@ -85,12 +84,6 @@ func initApp() *cli.App {
 			Usage:  "Create new snapshot",
 			Flags:  mainFlag,
 			Action: cli.ActionFunc(createAction),
-		},
-		{
-			Name:   "maintain",
-			Usage:  "Combine `clear` and `create`",
-			Flags:  mainFlag,
-			Action: cli.ActionFunc(maintainAction),
 		},
 	}
 
@@ -112,11 +105,10 @@ func defaultAction(c *cli.Context) error {
 	case "export":
 		exportAction(c)
 	case "create":
+		clearAction(c)
 		createAction(c)
 	case "clear":
 		clearAction(c)
-	case "maintain":
-		maintainAction(c)
 	default:
 		log.Fatal("action not valid!")
 	}
@@ -136,12 +128,9 @@ func initAction(c *cli.Context) (config, *rds.RDS) {
 }
 
 func exportAction(c *cli.Context) error {
-
 	file := c.String("file")
 	conf, svc := initAction(c)
-
 	var err error
-
 	output, err := createWriter(file)
 	if err != nil {
 		return err
@@ -155,24 +144,21 @@ func exportAction(c *cli.Context) error {
 }
 
 func clearAction(c *cli.Context) error {
-	limit := c.Int("limit")
+	keep := c.Int("keep")
 	conf, svc := initAction(c)
-	maintainSnapshots(conf.DbName, svc, limit)
+	if keep > 0 {
+		clearSnapshots(conf.DbName, svc, keep)
+	} else {
+		log.Fatal("number of snapshots need to be more than 0!")
+	}
+
 	return nil
 }
 
 func createAction(c *cli.Context) error {
 	suffix := c.String("suffix")
 	conf, svc := initAction(c)
-	createSnapshot(conf.DbName, svc, suffix)
-	return nil
-}
 
-func maintainAction(c *cli.Context) error {
-	limit := c.Int("limit")
-	suffix := c.String("suffix")
-	conf, svc := initAction(c)
-	maintainSnapshots(conf.DbName, svc, limit)
 	createSnapshot(conf.DbName, svc, suffix)
 	return nil
 }
