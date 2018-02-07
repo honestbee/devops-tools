@@ -101,6 +101,7 @@ func createSnapshot(dbInstanceIdentifier string, svc *rds.RDS, suffix string) *r
 		log.Fatal(err)
 	}
 
+	fmt.Print(snapshotName, " has been created successfully!")
 	return result
 }
 
