@@ -1,0 +1,6 @@
+name: ghac      # name of the module
+build:              # list of build commands to execute in each platform
+  darwin:
+    cmd: echo        # build command
+    args: ["123"]
+    # args: ["-osarch=", "darwin/amd64 linux/amd64", "-output=", "bin/ghac_{{.OS}}_{{.Arch}}"]    # optional list of arguments to be passed when invoking the build command
