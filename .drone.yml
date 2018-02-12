@@ -7,7 +7,6 @@ pipeline:
     pull: true
     commands:
       - mbt build diff --from ${DRONE_PREV_COMMIT_SHA} --to ${DRONE_COMMIT_SHA}
-      - ls bin/
     when:
       event: tag
 
