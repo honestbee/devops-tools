@@ -1,3 +1,6 @@
+workspace:
+  base: /go/src
+
 pipeline:
   build:
     image: quay.io/honestbee/monorepo:2018-02-12-add-gox-image
