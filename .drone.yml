@@ -11,7 +11,6 @@ pipeline:
     image: quay.io/honestbee/monorepo:2018-02-12-add-gox-image
     pull: true
     commands:
-      - git rev-list --tags --max-count=1
       - mbt build diff --from `git rev-list --tags --max-count=2 | tail -n 1` --to ${DRONE_COMMIT_SHA}
     when:
       event: tag
