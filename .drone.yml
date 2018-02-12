@@ -10,6 +10,7 @@ pipeline:
       - ls bin/
     when:
       branch: [2018-02-09-ci-cd-implementation]
+      event: tag
 
   github_release:
     image: plugins/github-release
@@ -19,3 +20,4 @@ pipeline:
     files: bin/*
     when:
       branch: [2018-02-09-ci-cd-implementation]
+      event: tag
