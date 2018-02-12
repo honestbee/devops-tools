@@ -1,6 +1,11 @@
 workspace:
   base: /go/src
 
+clone:
+  git:
+    image: plugins/git
+    tags: true
+
 pipeline:
   build:
     image: quay.io/honestbee/monorepo:2018-02-12-add-gox-image
@@ -8,11 +13,14 @@ pipeline:
     commands:
       - git reflog
       - mbt build diff --from ${DRONE_PREV_COMMIT_SHA} --to ${DRONE_COMMIT_SHA}
+    when:
+      event: tag
 
   github_release:
     image: plugins/github-release
-    build_event: push
     repo_owner: honestbee
     repo_name: devops-tools
     secrets: [ github_token ]
     files: bin/*
+    when:
+      event: tag
