@@ -12,7 +12,7 @@ pipeline:
     pull: true
     commands:
       - git rev-list --tags --max-count=1
-      - mbt build diff --from ${DRONE_PREV_COMMIT_SHA} --to ${DRONE_COMMIT_SHA}
+      - mbt build diff --from `git rev-list --tags --max-count=1` --to ${DRONE_COMMIT_SHA}
     when:
       event: tag
 
