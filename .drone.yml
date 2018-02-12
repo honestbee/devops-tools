@@ -1,0 +1,7 @@
+pipeline:
+  build:
+    image: quay.io/honestbee/monorepo:2018-02-12-add-gox-image
+    commands:
+      -  mbt build diff
+    when:
+      branch: [2018-02-09-ci-cd-implementation]
