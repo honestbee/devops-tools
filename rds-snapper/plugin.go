@@ -15,6 +15,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/rds"
 )
 
+// config struct
 type config struct {
 	AccessKey string
 	SecretKey string
