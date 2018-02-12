@@ -6,7 +6,16 @@ pipeline:
     image: quay.io/honestbee/monorepo:2018-02-12-add-gox-image
     pull: true
     commands:
-      - mbt build branch
+      - mbt build head
       - ls bin/
+    when:
+      branch: [2018-02-09-ci-cd-implementation]
+
+  github_release:
+    image: plugins/github-release
+    repo_owner: honestbee
+    repo_name: devops-tools
+    secrets: [ github_token ]
+    files: bin/*
     when:
       branch: [2018-02-09-ci-cd-implementation]
