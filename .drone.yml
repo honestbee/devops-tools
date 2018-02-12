@@ -6,7 +6,7 @@ pipeline:
     image: quay.io/honestbee/monorepo:2018-02-12-add-gox-image
     pull: true
     commands:
-      - mbt build branch
+      - mbt build diff --from ${DRONE_PREV_COMMIT_SHA} --to ${DRONE_COMMIT_SHA}
       - ls bin/
     when:
       event: tag
