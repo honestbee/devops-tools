@@ -9,7 +9,6 @@ pipeline:
       - mbt build branch
       - ls bin/
     when:
-      branch: [2018-02-09-ci-cd-implementation]
       event: tag
 
   github_release:
@@ -19,5 +18,4 @@ pipeline:
     secrets: [ github_token ]
     files: bin/*
     when:
-      branch: [2018-02-09-ci-cd-implementation]
       event: tag
