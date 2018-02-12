@@ -1,6 +1,7 @@
 pipeline:
   build:
     image: quay.io/honestbee/monorepo:2018-02-12-add-gox-image
+    pull: true
     commands:
       -  mbt build branch
     when:
