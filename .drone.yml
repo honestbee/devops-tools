@@ -6,8 +6,8 @@ pipeline:
     image: quay.io/honestbee/monorepo:2018-02-12-add-gox-image
     pull: true
     commands:
-      - git rev-parse master~1
-      - mbt build diff --from `git rev-parse master~1` --to ${DRONE_COMMIT_SHA}
+      - git rev-parse origin/master~1
+      - mbt build diff --from `git rev-parse origin/master~1` --to ${DRONE_COMMIT_SHA}
     when:
       event: tag
 
