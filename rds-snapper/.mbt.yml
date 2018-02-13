@@ -1,0 +1,6 @@
+name: rds-snapper      # name of the module
+build:              # list of build commands to execute in each platform
+  linux:
+    cmd: ../scripts/build_binaries.sh
+properties:
+  version: "1.0.2"

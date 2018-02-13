@@ -1,4 +1,4 @@
-## rds-snapper
+# rds-snapper
 
 A tool to manage rds snapshots.
 This is designed to run during `drone pipeline` in which we could cleanup old snapshots and create a new one before deploying new code to production.

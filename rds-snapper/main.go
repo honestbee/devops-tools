@@ -9,6 +9,7 @@ import (
 	"github.com/urfave/cli"
 )
 
+// initApp
 func initApp() *cli.App {
 	app := cli.NewApp()
 	app.Name = "rds-snapper"
