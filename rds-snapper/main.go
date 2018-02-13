@@ -91,6 +91,7 @@ func initApp() *cli.App {
 	return app
 }
 
+// main function
 func main() {
 
 	app := initApp()
