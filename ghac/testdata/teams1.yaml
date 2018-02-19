@@ -1,4 +1,3 @@
-teams:
 - id: 1
   name: Test team1
   description: test team1
@@ -19,7 +18,7 @@ teams:
 - id: 3
   name: Test team3
   description: test team3
-  slug: testteam3
+  slug: test-team3
   privacy: secret
   user_roles:
     admin1: maintainer

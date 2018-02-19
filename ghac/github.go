@@ -2,6 +2,9 @@ package main
 
 import (
 	"io/ioutil"
+	"os"
+	"path/filepath"
+	"regexp"
 	"strings"
 
 	log "github.com/sirupsen/logrus"
@@ -42,12 +45,39 @@ func (d *TeamFromYaml) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	return nil
 }
 
-func readTeams(yamlfile string) (*TeamList, error) {
-	tl := TeamList{}
-	data, err := ioutil.ReadFile(yamlfile)
+func findTeamsYaml(teamsDir string) ([]string, error) {
+	fileList := []string{}
+	err := filepath.Walk(teamsDir, func(path string, f os.FileInfo, err error) error {
+		match, err := regexp.MatchString(".(yaml|yml)", path)
+		if err != nil {
+			log.Errorf("Error matching file name %q: %v\n", path, err)
+			return err
+		}
+		if match == true {
+			log.Debugf("Found match %q\n", path)
+			fileList = append(fileList, path)
+		}
+		return nil
+	})
+	if err != nil {
+		log.Errorf("Error walking path %q: %v\n", teamsDir, err)
+		return nil, err
+	}
+	return fileList, nil
+}
+
+func readTeams(teamsDir string) (*TeamList, error) {
+	fileList, err := findTeamsYaml(teamsDir)
 	if err != nil {
 		return nil, err
 	}
+	combined := []string{"teams:"}
+	for _, file := range fileList {
+		data, _ := ioutil.ReadFile(file)
+		combined = append(combined, string(data))
+	}
+	data := strings.Join(combined, "\n")
+	tl := TeamList{}
 	err = yaml.Unmarshal([]byte(data), &tl)
 	if err != nil {
 		return nil, err

@@ -1,0 +1,26 @@
+- id: 4
+  name: Test team4
+  description: test team4
+  slug: test-team4
+  user_roles:
+    admin1: maintainer
+    admin2: maintainer
+    user1: member
+- id: 5
+  name: Test team5
+  description: test team5
+  slug: test-team5
+  privacy: secret
+  user_roles:
+    admin1: maintainer
+    admin2: maintainer
+    user2: member
+- id: 6
+  name: Test team6
+  description: test team6
+  slug: test-team6
+  privacy: secret
+  user_roles:
+    admin1: maintainer
+    admin2: maintainer
+    user2: member
