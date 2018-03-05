@@ -28,6 +28,10 @@ func main() {
 			Usage:  "Log level (panic, fatal, error, warn, info, or debug)",
 			EnvVar: "LOG_LEVEL",
 		},
+		cli.StringSliceFlag{
+			Name:  "team-filter,f",
+			Usage: "`slugs` to filter teams by",
+		},
 	}
 	app := cli.NewApp()
 	app.Name = "github-tf"
@@ -40,6 +44,15 @@ func main() {
 	app.Flags = flags
 
 	app.Run(os.Args)
+}
+
+func contains(names []string, name string) bool {
+	for _, n := range names {
+		if name == n {
+			return true
+		}
+	}
+	return false
 }
 
 func run(c *cli.Context) error {
@@ -66,8 +79,16 @@ func run(c *cli.Context) error {
 		return err
 	}
 
-	teamRolesArr := make([]TeamRoles, len(teams))
+	teamFilter := c.StringSlice("team-filter")
+	filteredTeams := teams[:0]
 	for _, t := range teams {
+		if contains(teamFilter, *t.Slug) {
+			filteredTeams = append(filteredTeams, t)
+		}
+	}
+
+	teamRolesArr := make([]TeamRoles, len(teams))
+	for _, t := range filteredTeams {
 		log.Debugf("Appending TeamRoles for: %v\n", *t.Slug)
 		teamRoles, err := gitHub.GetTeamRoles(t)
 		if err != nil {

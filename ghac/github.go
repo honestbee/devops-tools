@@ -18,6 +18,7 @@ type (
 		Name        string            `yaml:"name,omitempty"`
 		Description string            `yaml:"description,omitempty"`
 		Slug        string            `yaml:"slug,omitempty"`
+		Namespace   string            `yaml:"namespace,omitempty"`
 		Privacy     string            `yaml:"privacy,omitempty"`
 		UserRoles   map[string]string `yaml:"user_roles"`
 		Parent      *Team             `yaml:"parent,omitempty"`
