@@ -47,12 +47,10 @@ func (d *TeamFromYaml) UnmarshalYAML(unmarshal func(interface{}) error) error {
 
 func findTeamsYaml(teamsDir string) ([]string, error) {
 	fileList := []string{}
+	var yamlExp = regexp.MustCompile(`.(yaml|yml)`)
+
 	err := filepath.Walk(teamsDir, func(path string, f os.FileInfo, err error) error {
-		match, err := regexp.MatchString(".(yaml|yml)", path)
-		if err != nil {
-			log.Errorf("Error matching file name %q: %v\n", path, err)
-			return err
-		}
+		match := yamlExp.MatchString(path)
 		if match == true {
 			log.Debugf("Found match %q\n", path)
 			fileList = append(fileList, path)
