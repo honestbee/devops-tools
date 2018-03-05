@@ -66,18 +66,29 @@ func findTeamsYaml(teamsDir string) ([]string, error) {
 	return fileList, nil
 }
 
-func readTeams(teamsDir string) (*TeamList, error) {
+func makeTeams(teamsDir string) (*TeamList, error) {
 	fileList, err := findTeamsYaml(teamsDir)
 	if err != nil {
 		return nil, err
 	}
-	combined := []string{"teams:"}
-	for _, file := range fileList {
-		data, _ := ioutil.ReadFile(file)
-		combined = append(combined, string(data))
-	}
-	data := strings.Join(combined, "\n")
 	tl := TeamList{}
+
+	for _, file := range fileList {
+		teamList, err := readTeams(file)
+		if err != nil {
+			return nil, err
+		}
+		tl.Teams = append(tl.Teams, teamList.Teams...)
+	}
+	return &tl, nil
+}
+
+func readTeams(yamlfile string) (*TeamList, error) {
+	tl := TeamList{}
+	data, err := ioutil.ReadFile(yamlfile)
+	if err != nil {
+		return nil, err
+	}
 	err = yaml.Unmarshal([]byte(data), &tl)
 	if err != nil {
 		return nil, err
