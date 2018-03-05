@@ -2,8 +2,12 @@
 - [ x ] dump function
 - [ x ] restore function
 - [ x ] help menu
-- [   ] loop through list of info and dump
-- [   ] loop through list of info and restore
+- [ x ] Password via env
+- [ x ] Password via csv file
+- [ x ] Loop through list of info and dump
+- [ x ] Loop through list of info and restore
+- [   ] Check csv file format before read
+- [   ] Add debug mode
 */
 package main
 
@@ -14,6 +18,8 @@ import (
 	"os/exec"
 	"strings"
 
+	"encoding/csv"
+
 	"github.com/urfave/cli"
 )
 
@@ -23,9 +29,15 @@ func checkErr(err error) {
 	}
 }
 
-func dump(dbHost string, dbName string, dbUser string) error {
-	cmd := exec.Command("pg_dump", "-U", dbUser, "--format=c", "-f", dbName+".sqlc", "-d", dbName, "-O", "-x", "-h", dbHost)
-	cmd.Stdin = strings.NewReader("password: ")
+// Use variadic function to overcome missing method-overloading in golang
+func dump(dbinfo ...string) error {
+	cmd := exec.Command("pg_dump", "--dbname=postgresql://"+dbinfo[2]+":"+dbinfo[3]+"@"+dbinfo[0]+":5432/"+dbinfo[1],
+		"--format=c",
+		"-f", dbinfo[1]+".sqlc",
+		"-O", "-x")
+	if dbinfo[3] == "" {
+		cmd.Stdin = strings.NewReader("password: ")
+	}
 	var out bytes.Buffer
 	var stderr bytes.Buffer // https://stackoverflow.com/a/18159705/2490986
 	cmd.Stdout = &out
@@ -39,9 +51,12 @@ func dump(dbHost string, dbName string, dbUser string) error {
 	return err
 }
 
-func restore(dbHost string, dbName string, dbUser string) error {
-	cmd := exec.Command("pg_restore", "-U", dbUser, "-d", dbName, dbName+".sqlc", "-h", dbHost)
-	cmd.Stdin = strings.NewReader("password: ")
+func restore(dbinfo ...string) error {
+	cmd := exec.Command("pg_restore", "--dbname=postgresql://"+dbinfo[2]+":"+dbinfo[3]+"@"+dbinfo[0]+":5432/"+dbinfo[1],
+		dbinfo[1]+".sqlc")
+	if dbinfo[3] == "" {
+		cmd.Stdin = strings.NewReader("password: ")
+	}
 	var out bytes.Buffer
 	var stderr bytes.Buffer // https://stackoverflow.com/a/18159705/2490986
 	cmd.Stdout = &out
@@ -53,10 +68,31 @@ func restore(dbHost string, dbName string, dbUser string) error {
 
 	}
 	return err
+}
+
+func csvReader(filePath string) [][]string {
+	file, err := os.Open(filePath)
+	checkErr(err)
+
+	defer file.Close()
+	r := csv.NewReader(file)
+	records, err := r.ReadAll()
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	return records
 }
 
 func main() {
-	dbUser, dbName, dbHost := os.Getenv("DBUSER"), os.Getenv("DBNAME"), os.Getenv("DBHOST")
+
+	/*
+	   The precedence for flag value sources is as follows (highest to lowest):
+	   - Command line flag value from user
+	   - Environment variable (if specified)
+	   - Configuration file (if specified)
+	   - Default defined on the flag
+	*/
 
 	flags := []cli.Flag{
 		cli.StringFlag{
@@ -74,6 +110,18 @@ func main() {
 			Usage:  "`<username>` to authenticate with",
 			EnvVar: "DBUSER",
 		},
+		cli.StringFlag{
+			Name:   "dbpassword",
+			Value:  "",
+			Usage:  "`<password>` to authenticate with (optional)",
+			EnvVar: "DBPASSWORD",
+		},
+		cli.StringFlag{
+			Name:   "config",
+			Value:  "",
+			Usage:  "Load config from `FILE`",
+			EnvVar: "DBCONFIG",
+		},
 	}
 
 	app := cli.NewApp()
@@ -88,18 +136,34 @@ func main() {
 			Aliases: []string{"d"},
 			Usage:   "dump database",
 			Flags:   flags,
-			Action: func(c *cli.Context) error {
-				err := dump(dbHost, dbName, dbUser)
-				return err
+			Action: func(c *cli.Context) (err error) {
+				if c.String("config") != "" {
+					records := csvReader(c.String("config"))
+					for _, record := range records {
+						dump(record[0], record[1], record[2], record[3])
+					}
+				} else {
+					dump(c.String("dbhost"), c.String("dbname"), c.String("dbuser"), c.String("dbpassword"))
+				}
+				return
 			},
 		},
 		{
 			Name:    "restore",
 			Aliases: []string{"r"},
 			Usage:   "restore database",
-			Action: func(c *cli.Context) error {
-				err := restore(dbHost, dbName, dbUser)
-				return err
+			Flags:   flags,
+			Action: func(c *cli.Context) (err error) {
+				if c.String("config") != "" {
+					records := csvReader(c.String("config"))
+					for _, record := range records {
+						restore(record[0], record[1], record[2], record[3])
+					}
+				} else {
+					restore(c.String("dbhost"), c.String("dbname"), c.String("dbuser"), c.String("dbpassword"))
+				}
+
+				return
 			},
 		},
 	}
@@ -107,8 +171,4 @@ func main() {
 	app.Flags = flags
 
 	app.Run(os.Args)
-	// err := restore(dbHost, dbName, dbUser)
-	// if err != nil {
-	// 	fmt.Println(err)
-	// }
 }
