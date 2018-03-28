@@ -45,31 +45,31 @@ INFO[0002] Prefixing "bar.honestbee.com." ...
 ```
 
 ```json
-Change {
-  ChangeBatch: {
-    Changes: [{
-        Action: "DELETE",
-        ResourceRecordSet: {
-          Name: "bar.honestbee.com.",
-          ResourceRecords: [{
-              Value: "\"heritage=external-dns,external-dns/owner=ap-southeast-1a.honestbee.com\""
+"Change" {
+  "ChangeBatch": {
+    "Changes": [{
+        "Action": "DELETE",
+        "ResourceRecordSet": {
+          "Name": "bar.honestbee.com.",
+          "ResourceRecords": [{
+              "Value": "\"heritage=external-dns,external-dns/owner=ap-southeast-1a.honestbee.com\""
             }],
-          TTL: 300,
-          Type: "TXT"
+          "TTL": 300,
+          "Type": "TXT"
         }
       },{
-        Action: "CREATE",
-        ResourceRecordSet: {
-          Name: "prefix.bar.honestbee.com.",
-          ResourceRecords: [{
-              Value: "\"heritage=external-dns,external-dns/owner=ap-southeast-1a.honestbee.com\""
+        "Action": "CREATE",
+        "ResourceRecordSet": {
+          "Name": "prefix.bar.honestbee.com.",
+          "ResourceRecords": [{
+              "Value": "\"heritage=external-dns,external-dns/owner=ap-southeast-1a.honestbee.com\""
             }],
-          TTL: 300,
-          Type: "TXT"
+          "TTL": 300,
+          "Type": "TXT"
         }
       }],
-    Comment: "Update prefix"
+    "Comment": "Update prefix"
   },
-  HostedZoneId: "..."
+  "HostedZoneId": "..."
 }
 ```
