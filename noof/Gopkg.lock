@@ -8,6 +8,18 @@
   version = "v2.0.0"
 
 [[projects]]
+  name = "github.com/google/go-github"
+  packages = ["github"]
+  revision = "e48060a28fac52d0f1cb758bc8b87c07bac4a87d"
+  version = "v15.0.0"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/google/go-querystring"
+  packages = ["query"]
+  revision = "53e6ce116135b80d037921a7fdd5138cf32d7a8a"
+
+[[projects]]
   name = "github.com/urfave/cli"
   packages = ["."]
   revision = "cfb38830724cc34fedffe9a2a29fb54fa9169cd1"
@@ -28,6 +40,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "4b208640685ef6d98af44d397736107a77b44e39d15ef21c3bf9bbe8e59b9529"
+  inputs-digest = "c9c2d61bfbeb0bd8069d104afeb14c4e1faad445b22acab6a4d8b511526d2887"
   solver-name = "gps-cdcl"
   solver-version = 1

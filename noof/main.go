@@ -5,17 +5,29 @@ import (
 	"log"
 	"os"
 
+	"github.com/honestbee/devops-tools/noof/pkg/util"
 	"github.com/urfave/cli"
 	dd "gopkg.in/zorkian/go-datadog-api.v2"
 )
 
 type Config struct {
 	Datadog Datadog
+	Github  Github
 }
 
 type Datadog struct {
 	APIKey string
 	AppKey string
+}
+
+type Github struct {
+	APIKey string
+}
+
+type Action interface {
+	addUser(*cli.Context)
+	listUser(*cli.Context)
+	deleteUser(*cli.Context)
 }
 
 // initApp
@@ -38,63 +50,88 @@ func initApp() *cli.App {
 			Usage:  "Datadog app key `DATADOG_APP_KEY`",
 			EnvVar: "PLUGIN_DATADOG_APP_KEY,DATADOG_APP_KEY",
 		},
+		cli.StringFlag{
+			Name:  "action",
+			Usage: "action",
+		},
+	}
+
+	githubFlag := []cli.Flag{
+		cli.StringFlag{
+			Name:   "github-api-key",
+			Usage:  "Github api key `GITHUB_API_KEY`",
+			EnvVar: "PLUGIN_GITHUB_API_KEY,GITHUB_API_KEY",
+		},
+		cli.StringFlag{
+			Name:  "action",
+			Usage: "action",
+		},
 	}
 
 	app.Flags = mainFlag
 
 	app.Commands = []cli.Command{
 		{
-			Name:  "datadog",
-			Usage: "manage datadog users",
-			Flags: ddFlag,
-			Subcommands: []cli.Command{
-				{
-					Name:  "add",
-					Usage: "add new user",
-					Action: func(c *cli.Context) error {
-						addUser(c)
-						return nil
-					},
-				},
-				{
-					Name:  "list",
-					Usage: "list all users",
-					Action: func(c *cli.Context) error {
-						listUser(c)
-						return nil
-					},
-				},
-				{
-					Name:  "delete",
-					Usage: "delete user",
-					Action: func(c *cli.Context) error {
-						deleteUser(c)
-						return nil
-					},
-				},
-			},
+			Name:   "github",
+			Usage:  "manage github users",
+			Flags:  githubFlag,
+			Action: defaultAction,
+		},
+		{
+			Name:   "datadog",
+			Usage:  "manage datadog users",
+			Flags:  ddFlag,
+			Action: defaultAction,
 		},
 	}
 
 	return app
 }
 
-func envAction(c *cli.Context) Config {
+func NewDatadogClient(c *cli.Context) *dd.Client {
 	var conf Config
 	conf.Datadog.APIKey = os.Getenv("DATADOG_API_KEY")
 	conf.Datadog.AppKey = os.Getenv("DATADOG_APP_KEY")
-
-	return conf
-}
-
-func clientAction(c *cli.Context, conf Config) *dd.Client {
 	client := dd.NewClient(conf.Datadog.APIKey, conf.Datadog.AppKey)
 
 	return client
 }
 
-func listUser(c *cli.Context) {
-	client := clientAction(c, envAction(c))
+func defaultAction(c *cli.Context) error {
+	action := c.String("action")
+	if action == "" {
+		log.Fatal("no action provided!")
+	}
+
+	if action != "add" && action != "list" && action != "delete" {
+		fmt.Println(action)
+		log.Fatal("action not valid!")
+	}
+
+	if util.CheckCommand(c.Command.FullName()) == "datadog" {
+		var d Datadog
+		executeCommand(d, action, c)
+	} else {
+		var g Github
+		executeCommand(g, action, c)
+	}
+
+	return nil
+}
+
+func executeCommand(a Action, action string, c *cli.Context) {
+	switch action {
+	case "add":
+		a.addUser(c)
+	case "list":
+		a.listUser(c)
+	case "delete":
+		a.deleteUser(c)
+	}
+}
+
+func (d Datadog) listUser(c *cli.Context) {
+	client := NewDatadogClient(c)
 	users, _ := client.GetUsers()
 
 	for _, user := range users {
@@ -102,20 +139,32 @@ func listUser(c *cli.Context) {
 	}
 }
 
-func addUser(c *cli.Context) {
+func (d Datadog) addUser(c *cli.Context) {
 	username := c.Args().First()
-	client := clientAction(c, envAction(c))
+	client := NewDatadogClient(c)
 	user, _ := client.CreateUser(&username, &username)
 
 	fmt.Println(*user.Email)
 
 }
 
-func deleteUser(c *cli.Context) {
+func (d Datadog) deleteUser(c *cli.Context) {
 	username := c.Args().First()
-	client := clientAction(c, envAction(c))
+	client := NewDatadogClient(c)
 	client.DeleteUser(username)
 
+}
+
+func (g Github) addUser(c *cli.Context) {
+	fmt.Println("hello world")
+}
+
+func (g Github) listUser(c *cli.Context) {
+	fmt.Println("hello world")
+}
+
+func (g Github) deleteUser(c *cli.Context) {
+	fmt.Println("hello world")
 }
 
 func main() {
