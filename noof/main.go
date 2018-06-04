@@ -26,7 +26,9 @@ type Github struct {
 
 type Action interface {
 	addUser(*cli.Context)
-	listUser(*cli.Context)
+	listUsers(*cli.Context)
+	listUserTeams(*cli.Context)
+	removeUserFromTeams(*cli.Context)
 	deleteUser(*cli.Context)
 }
 
@@ -69,7 +71,6 @@ func initApp() *cli.App {
 	}
 
 	app.Flags = mainFlag
-
 	app.Commands = []cli.Command{
 		{
 			Name:   "github",
@@ -88,28 +89,16 @@ func initApp() *cli.App {
 	return app
 }
 
-func NewDatadogClient(c *cli.Context) *dd.Client {
-	return dd.NewClient(c.String("datadog-api-key"), c.String("datadog-app-key"))
-
-}
-
-func NewGithubClient(c *cli.Context) (context.Context, *github.Client) {
-	ctx := context.Background()
-	ts := oauth2.StaticTokenSource(&oauth2.Token{AccessToken: c.String("github-token")})
-	tc := oauth2.NewClient(ctx, ts)
-	return ctx, github.NewClient(tc)
-}
-
 func defaultAction(c *cli.Context) error {
 	action := c.String("action")
 	if action == "" {
 		log.Fatal("no action provided!")
 	}
 
-	if action != "add" && action != "list" && action != "delete" {
-		fmt.Println(action)
-		log.Fatal("action not valid!")
-	}
+	// 	if action != "add" && action != "list" && action != "delete" {
+	// 		fmt.Println(action)
+	// 		log.Fatal("action not valid!")
+	// 	}
 
 	var conf Config
 
@@ -122,18 +111,33 @@ func defaultAction(c *cli.Context) error {
 	return nil
 }
 
+func NewDatadogClient(c *cli.Context) *dd.Client {
+	return dd.NewClient(c.String("datadog-api-key"), c.String("datadog-app-key"))
+}
+
+func NewGithubClient(c *cli.Context) (context.Context, *github.Client) {
+	ctx := context.Background()
+	ts := oauth2.StaticTokenSource(&oauth2.Token{AccessToken: c.String("github-token")})
+	tc := oauth2.NewClient(ctx, ts)
+	return ctx, github.NewClient(tc)
+}
+
 func executeCommand(a Action, action string, c *cli.Context) {
 	switch action {
 	case "add":
 		a.addUser(c)
 	case "list":
-		a.listUser(c)
+		a.listUsers(c)
+	case "listUserTeams":
+		a.listUserTeams(c)
+	case "removeUserFromTeams":
+		a.removeUserFromTeams(c)
 	case "delete":
 		a.deleteUser(c)
 	}
 }
 
-func (d Datadog) listUser(c *cli.Context) {
+func (d Datadog) listUsers(c *cli.Context) {
 	client := NewDatadogClient(c)
 	users, _ := client.GetUsers()
 
@@ -157,6 +161,14 @@ func (d Datadog) deleteUser(c *cli.Context) {
 	client.DeleteUser(username)
 }
 
+func (d Datadog) listUserTeams(c *cli.Context) {
+
+}
+
+func (d Datadog) removeUserFromTeams(c *cli.Context) {
+
+}
+
 func (g Github) addUser(c *cli.Context) {
 	ctx, client := NewGithubClient(c)
 	_, _, err := client.Organizations.EditOrgMembership(ctx, c.Args().Get(0), "honestbee", &github.Membership{})
@@ -165,7 +177,7 @@ func (g Github) addUser(c *cli.Context) {
 	}
 }
 
-func (g Github) listUser(c *cli.Context) {
+func (g Github) listUsers(c *cli.Context) {
 	ctx, client := NewGithubClient(c)
 	users, _, err := client.Organizations.ListMembers(ctx, "honestbee", &github.ListMembersOptions{
 		ListOptions: github.ListOptions{
@@ -187,6 +199,41 @@ func (g Github) deleteUser(c *cli.Context) {
 	_, err := client.Organizations.RemoveOrgMembership(ctx, c.Args().Get(0), "honestbee")
 	if err != nil {
 		fmt.Println(err)
+	}
+}
+
+func (g Github) listUserTeams(c *cli.Context) {
+	// https://godoc.org/github.com/google/go-github/github#OrganizationsService.ListUserTeams
+	ctx, client := NewGithubClient(c)
+	teams, _, err := client.Organizations.ListTeams(ctx, "honestbee", &github.ListOptions{})
+	for _, team := range teams {
+		isTeamMember, _, err := client.Organizations.IsTeamMember(ctx, team.GetID(), c.Args().Get(0))
+		if err != nil {
+			fmt.Println(err)
+		}
+		if isTeamMember {
+			fmt.Println(*team.Name)
+		}
+	}
+	if err != nil {
+		fmt.Println(err)
+	}
+
+}
+
+func (g Github) removeUserFromTeams(c *cli.Context) {
+	// https://godoc.org/github.com/google/go-github/github#OrganizationsService.RemoveTeamMembership
+	ctx, client := NewGithubClient(c)
+	teams, _, err := client.Organizations.ListTeams(ctx, "honestbee", &github.ListOptions{})
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	for _, team := range teams {
+		_, err := client.Organizations.RemoveTeamMembership(ctx, team.GetID(), c.Args().Get(0))
+		if err != nil {
+			fmt.Println(err)
+		}
 	}
 }
 
