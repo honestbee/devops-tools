@@ -198,8 +198,6 @@ func executeCommand(a Action, action string, c *cli.Context) {
 		a.addUser(c)
 	case "list":
 		a.listUsers(c)
-	case "listUserTeams":
-		a.listUserTeams(c)
 	case "removeUserFromTeams":
 		a.removeUserFromTeams(c)
 	case "delete":
