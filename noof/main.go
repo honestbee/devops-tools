@@ -1,42 +1,29 @@
 package main
 
 import (
-	"context"
 	"fmt"
 	"log"
 	"os"
 
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/credentials"
-	"github.com/aws/aws-sdk-go/aws/session"
-	iam "github.com/aws/aws-sdk-go/service/iam"
-	"github.com/google/go-github/github"
+	"github.com/honestbee/devops-tools/noof/pkg/aws"
+	"github.com/honestbee/devops-tools/noof/pkg/datadog"
+	"github.com/honestbee/devops-tools/noof/pkg/github"
 	"github.com/honestbee/devops-tools/noof/pkg/util"
 	"github.com/urfave/cli"
-	"golang.org/x/oauth2"
-	dd "gopkg.in/zorkian/go-datadog-api.v2"
 )
 
 type Config struct {
-	Datadog Datadog
-	Github  Github
-	Aws     Aws
+	Datadog datadog.Datadog
+	Github  github.Github
+	Aws     aws.Aws
 }
 
-type Datadog struct {
-}
-
-type Github struct {
-}
-
-type Aws struct {
-}
 
 type Action interface {
-	addUser(*cli.Context)
-	listUsers(*cli.Context)
-	removeUserFromTeams(*cli.Context)
-	deleteUser(*cli.Context)
+	AddUser(*cli.Context)
+	ListUsers(*cli.Context)
+	RemoveUserFromTeams(*cli.Context)
+	DeleteUser(*cli.Context)
 }
 
 // initApp
@@ -149,222 +136,16 @@ func defaultAction(c *cli.Context) error {
 	return nil
 }
 
-func NewDatadogClient(c *cli.Context) *dd.Client {
-	return dd.NewClient(c.String("datadog-api-key"), c.String("datadog-app-key"))
-}
-
-func NewGithubClient(c *cli.Context) (context.Context, *github.Client) {
-	ctx := context.Background()
-	ts := oauth2.StaticTokenSource(&oauth2.Token{AccessToken: c.String("github-token")})
-	tc := oauth2.NewClient(ctx, ts)
-	return ctx, github.NewClient(tc)
-}
-
-// create *aws.Config to use with session
-func newAwsConfig(c *cli.Context, region string) *aws.Config {
-	// combine many providers in case some is missing
-	creds := credentials.NewChainCredentials([]credentials.Provider{
-		// use static access key & private key if available
-		&credentials.StaticProvider{
-			Value: credentials.Value{
-				AccessKeyID:     c.String("aws-access-key"),
-				SecretAccessKey: c.String("aws-secret-key"),
-			},
-		},
-		// fallback to default aws environment variables
-		&credentials.EnvProvider{},
-		// read aws config file $HOME/.aws/credentials
-		&credentials.SharedCredentialsProvider{},
-	})
-
-	awsConfig := aws.NewConfig()
-	awsConfig.WithCredentials(creds)
-	awsConfig.WithRegion(region)
-
-	return awsConfig
-}
-
-// create *iam client from specific *aws.Config
-func NewAwsClient(awsConfig *aws.Config) (*aws.Context, *iam.IAM) {
-	ctx := aws.BackgroundContext()
-	sess := session.Must(session.NewSession(awsConfig))
-	client := iam.New(sess)
-	return &ctx, client
-}
-
 func executeCommand(a Action, action string, c *cli.Context) {
 	switch action {
 	case "add":
-		a.addUser(c)
+		a.AddUser(c)
 	case "list":
-		a.listUsers(c)
-	case "removeUserFromTeams":
-		a.removeUserFromTeams(c)
+		a.ListUsers(c)
+	case "RemoveUserFromTeams":
+		a.RemoveUserFromTeams(c)
 	case "delete":
-		a.deleteUser(c)
-	}
-}
-
-func (d Datadog) listUsers(c *cli.Context) {
-	client := NewDatadogClient(c)
-	users, _ := client.GetUsers()
-
-	for _, user := range users {
-		fmt.Println(*user.Email)
-	}
-}
-
-func (d Datadog) addUser(c *cli.Context) {
-	username := c.Args().Get(0)
-	client := NewDatadogClient(c)
-	user, _ := client.CreateUser(&username, &username)
-
-	fmt.Println(*user.Email)
-
-}
-
-func (d Datadog) deleteUser(c *cli.Context) {
-	username := c.Args().Get(0)
-	client := NewDatadogClient(c)
-	client.DeleteUser(username)
-}
-
-func (d Datadog) listUserTeams(c *cli.Context) {
-
-}
-
-func (d Datadog) removeUserFromTeams(c *cli.Context) {
-
-}
-
-func (g Github) addUser(c *cli.Context) {
-	ctx, client := NewGithubClient(c)
-	_, _, err := client.Organizations.EditOrgMembership(ctx, c.Args().Get(0), "honestbee", &github.Membership{})
-	if err != nil {
-		fmt.Println(err)
-	}
-}
-
-func (g Github) listUsers(c *cli.Context) {
-	ctx, client := NewGithubClient(c)
-	users, _, err := client.Organizations.ListMembers(ctx, "honestbee", &github.ListMembersOptions{
-		ListOptions: github.ListOptions{
-			Page:    1,
-			PerPage: 1000,
-		},
-	})
-	if err != nil {
-		fmt.Println(err)
-	}
-
-	for _, user := range users {
-		fmt.Println(*user.Login)
-	}
-}
-
-func (g Github) deleteUser(c *cli.Context) {
-	ctx, client := NewGithubClient(c)
-	_, err := client.Organizations.RemoveOrgMembership(ctx, c.Args().Get(0), "honestbee")
-	if err != nil {
-		fmt.Println(err)
-	}
-}
-
-func listUserTeams(c *cli.Context, ctx context.Context, client *github.Client) []*github.Team {
-	// https://godoc.org/github.com/google/go-github/github#OrganizationsService.ListUserTeams
-	var teamList []*github.Team
-	teams, _, err := client.Organizations.ListTeams(ctx, "honestbee", &github.ListOptions{})
-	for _, team := range teams {
-		isTeamMember, _, err := client.Organizations.IsTeamMember(ctx, team.GetID(), c.Args().Get(0))
-		if err != nil {
-			fmt.Println(err)
-		}
-		if isTeamMember {
-			fmt.Println(*team.Name)
-			teamList = append(teamList, team)
-		}
-	}
-	if err != nil {
-		fmt.Println(err)
-	}
-	return teamList
-}
-
-func (g Github) removeUserFromTeams(c *cli.Context) {
-	// https://godoc.org/github.com/google/go-github/github#OrganizationsService.RemoveTeamMembership
-	ctx, client := NewGithubClient(c)
-	teams := listUserTeams(c, ctx, client)
-	for _, team := range teams {
-		_, err := client.Organizations.RemoveTeamMembership(ctx, team.GetID(), c.Args().Get(0))
-		if err != nil {
-			fmt.Println(err)
-		}
-	}
-}
-
-func (Aws) listUsers(c *cli.Context) {
-	awsConfig := newAwsConfig(c, c.String("region"))
-	ctx, client := NewAwsClient(awsConfig)
-	output, err := client.ListUsersWithContext(*ctx, &iam.ListUsersInput{})
-	if err != nil {
-		fmt.Println(err)
-	}
-	fmt.Println(output)
-}
-
-func (Aws) addUser(c *cli.Context) {
-	awsConfig := newAwsConfig(c, c.String("region"))
-	ctx, client := NewAwsClient(awsConfig)
-	userName := c.Args().Get(0)
-	output, err := client.CreateUserWithContext(*ctx, &iam.CreateUserInput{
-		UserName: &userName,
-	})
-	if err != nil {
-		fmt.Println(err)
-	}
-	fmt.Println(output.User.UserName)
-}
-
-func (Aws) deleteUser(c *cli.Context) {
-	awsConfig := newAwsConfig(c, c.String("region"))
-	ctx, client := NewAwsClient(awsConfig)
-	userName := c.Args().Get(0)
-	output, err := client.DeleteUserWithContext(*ctx, &iam.DeleteUserInput{
-		UserName: &userName,
-	})
-	if err != nil {
-		fmt.Println(err)
-	}
-	fmt.Println(output)
-}
-
-func awsListUserTeams(c *cli.Context, awsConfig *aws.Config, ctx *aws.Context, client *iam.IAM) []*iam.Group {
-	var groupList []*iam.Group
-	userName := c.Args().Get(0)
-	output, err := client.ListGroupsForUserWithContext(*ctx, &iam.ListGroupsForUserInput{
-		UserName: &userName,
-	})
-	if err != nil {
-		fmt.Println(err)
-	}
-	for _, group := range output.Groups {
-		fmt.Println(*group.GroupName)
-		groupList = append(groupList, group)
-	}
-
-	return groupList
-}
-func (Aws) removeUserFromTeams(c *cli.Context) {
-	awsConfig := newAwsConfig(c, c.String("region"))
-	ctx, client := NewAwsClient(awsConfig)
-	userName := c.Args().Get(0)
-	groups := awsListUserTeams(c, awsConfig, ctx, client)
-
-	for _, group := range groups {
-		client.RemoveUserFromGroupWithContext(*ctx, &iam.RemoveUserFromGroupInput{
-			UserName:  &userName,
-			GroupName: group.GroupName,
-		})
+		a.DeleteUser(c)
 	}
 }
 
