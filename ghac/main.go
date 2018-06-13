@@ -51,7 +51,9 @@ func main() {
 
 	app.Flags = flags
 
-	app.Run(os.Args)
+	if err := app.Run(os.Args); err != nil {
+		log.Fatal(err)
+	}
 }
 
 func run(c *cli.Context) error {
@@ -62,9 +64,9 @@ func run(c *cli.Context) error {
 	}
 	log.SetLevel(logLevel)
 
-	// log.Debugf("source: %v", c.String("source"))
-	// log.Debugf("destination: %v", c.String("destination"))
-	// log.Debugf("template: %v", c.String("template"))
+	log.Debugf("source: %v", c.String("source"))
+	log.Debugf("destination: %v", c.String("destination"))
+	log.Debugf("template: %v", c.String("template"))
 
 	//TODO: Add more validations
 	dstDirName := path.Dir(c.String("destination"))
@@ -95,10 +97,13 @@ func run(c *cli.Context) error {
 	for _, t := range tl.Teams {
 		if regexFilter == nil || regexFilter.MatchString(t.Slug) {
 			// render template to destination (1 file per team)
-			f, err := os.Create(path.Join(dstDirName, fmt.Sprintf("%v%v", t.Slug, suffix)))
+			p := path.Join(dstDirName, fmt.Sprintf("%v%v", t.Slug, suffix))
+			f, err := os.Create(p)
 			if err != nil {
 				return err
 			}
+
+			log.Debugf("rendering template for %s to %s", t.Slug, p)
 			err = RenderTemplate((*Team)(t), tpl, f)
 			f.Close()
 			if err != nil {
