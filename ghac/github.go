@@ -4,7 +4,6 @@ import (
 	"io/ioutil"
 	"strings"
 
-	log "github.com/sirupsen/logrus"
 	yaml "gopkg.in/yaml.v2"
 )
 
@@ -39,7 +38,7 @@ func (d *TeamFromYaml) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	sl := strings.Split(d.Slug, "-")
 	d.SlugPrefix = strings.Join(sl[:len(sl)-1], "-")
 	d.SlugSuffix = sl[len(sl)-1]
-	log.Debugf("SlugPrefix %v - SlugSuffix %v", d.SlugPrefix, d.SlugSuffix)
+
 	return nil
 }
 
