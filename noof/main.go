@@ -18,12 +18,11 @@ type Config struct {
 	Aws     aws.Aws
 }
 
-
 type Action interface {
 	AddUser(*cli.Context)
 	ListUsers(*cli.Context)
 	RemoveUserFromTeams(*cli.Context)
-	DeleteUser(*cli.Context)
+	RemoveUser(*cli.Context)
 }
 
 // initApp
@@ -145,7 +144,7 @@ func executeCommand(a Action, action string, c *cli.Context) {
 	case "RemoveUserFromTeams":
 		a.RemoveUserFromTeams(c)
 	case "delete":
-		a.DeleteUser(c)
+		a.RemoveUser(c)
 	}
 }
 

@@ -10,6 +10,7 @@ import (
 	"github.com/urfave/cli"
 )
 
+// Aws struct type
 type Aws struct {
 }
 
@@ -37,7 +38,7 @@ func newAwsConfig(c *cli.Context, region string) *aws.Config {
 	return awsConfig
 }
 
-// create *iam client from specific *aws.Config
+// NewAwsClient create *iam client from specific *aws.Config
 func NewAwsClient(awsConfig *aws.Config) (*aws.Context, *iam.IAM) {
 	ctx := aws.BackgroundContext()
 	sess := session.Must(session.NewSession(awsConfig))
@@ -45,6 +46,7 @@ func NewAwsClient(awsConfig *aws.Config) (*aws.Context, *iam.IAM) {
 	return &ctx, client
 }
 
+// ListUsers list all users
 func (Aws) ListUsers(c *cli.Context) {
 	awsConfig := newAwsConfig(c, c.String("region"))
 	ctx, client := NewAwsClient(awsConfig)
@@ -55,6 +57,7 @@ func (Aws) ListUsers(c *cli.Context) {
 	fmt.Println(output)
 }
 
+// AddUser add new user
 func (Aws) AddUser(c *cli.Context) {
 	awsConfig := newAwsConfig(c, c.String("region"))
 	ctx, client := NewAwsClient(awsConfig)
@@ -68,7 +71,8 @@ func (Aws) AddUser(c *cli.Context) {
 	fmt.Println(output.User.UserName)
 }
 
-func (Aws) DeleteUser(c *cli.Context) {
+// RemoveUser delete specific user
+func (Aws) RemoveUser(c *cli.Context) {
 	awsConfig := newAwsConfig(c, c.String("region"))
 	ctx, client := NewAwsClient(awsConfig)
 	userName := c.Args().Get(0)
@@ -97,6 +101,8 @@ func awsListUserTeams(c *cli.Context, awsConfig *aws.Config, ctx *aws.Context, c
 
 	return groupList
 }
+
+// RemoveUserFromTeams remove user from his / her teams
 func (Aws) RemoveUserFromTeams(c *cli.Context) {
 	awsConfig := newAwsConfig(c, c.String("region"))
 	ctx, client := NewAwsClient(awsConfig)

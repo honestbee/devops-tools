@@ -9,9 +9,11 @@ import (
 	"golang.org/x/oauth2"
 )
 
+// Github struc
 type Github struct {
 }
 
+// NewGithubClient create new github client
 func NewGithubClient(c *cli.Context) (context.Context, *github.Client) {
 	ctx := context.Background()
 	ts := oauth2.StaticTokenSource(&oauth2.Token{AccessToken: c.String("github-token")})
@@ -19,6 +21,7 @@ func NewGithubClient(c *cli.Context) (context.Context, *github.Client) {
 	return ctx, github.NewClient(tc)
 }
 
+// AddUser add new user to organization
 func (g Github) AddUser(c *cli.Context) {
 	ctx, client := NewGithubClient(c)
 	_, _, err := client.Organizations.EditOrgMembership(ctx, c.Args().Get(0), "honestbee", &github.Membership{})
@@ -27,6 +30,7 @@ func (g Github) AddUser(c *cli.Context) {
 	}
 }
 
+// ListUsers list user from specific organization
 func (g Github) ListUsers(c *cli.Context) {
 	ctx, client := NewGithubClient(c)
 	users, _, err := client.Organizations.ListMembers(ctx, "honestbee", &github.ListMembersOptions{
@@ -44,7 +48,8 @@ func (g Github) ListUsers(c *cli.Context) {
 	}
 }
 
-func (g Github) DeleteUser(c *cli.Context) {
+// RemoveUser remove user from organization
+func (g Github) RemoveUser(c *cli.Context) {
 	ctx, client := NewGithubClient(c)
 	_, err := client.Organizations.RemoveOrgMembership(ctx, c.Args().Get(0), "honestbee")
 	if err != nil {
@@ -52,7 +57,8 @@ func (g Github) DeleteUser(c *cli.Context) {
 	}
 }
 
-func ListUserTeams(c *cli.Context, ctx context.Context, client *github.Client) []*github.Team {
+// ListUserTeams list user's teams
+func ListUserTeams(ctx context.Context, c *cli.Context, client *github.Client) []*github.Team {
 	// https://godoc.org/github.com/google/go-github/github#OrganizationsService.ListUserTeams
 	var teamList []*github.Team
 	teams, _, err := client.Organizations.ListTeams(ctx, "honestbee", &github.ListOptions{})
@@ -72,10 +78,11 @@ func ListUserTeams(c *cli.Context, ctx context.Context, client *github.Client) [
 	return teamList
 }
 
+// RemoveUserFromTeams remove user from his/her teams
 func (g Github) RemoveUserFromTeams(c *cli.Context) {
 	// https://godoc.org/github.com/google/go-github/github#OrganizationsService.RemoveTeamMembership
 	ctx, client := NewGithubClient(c)
-	teams := ListUserTeams(c, ctx, client)
+	teams := ListUserTeams(ctx, c, client)
 	for _, team := range teams {
 		_, err := client.Organizations.RemoveTeamMembership(ctx, team.GetID(), c.Args().Get(0))
 		if err != nil {
