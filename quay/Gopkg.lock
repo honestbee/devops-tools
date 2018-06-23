@@ -20,6 +20,21 @@
   revision = "53e6ce116135b80d037921a7fdd5138cf32d7a8a"
 
 [[projects]]
+  name = "github.com/kelseyhightower/envconfig"
+  packages = ["."]
+  revision = "f611eb38b3875cc3bd991ca91c51d06446afa14c"
+  version = "v1.3.0"
+
+[[projects]]
+  name = "github.com/koudaiii/qucli"
+  packages = [
+    "quay",
+    "utils"
+  ]
+  revision = "73b63479e7763f160ef0ecd686d99b29570d48c3"
+  version = "v0.6.5"
+
+[[projects]]
   name = "github.com/sirupsen/logrus"
   packages = ["."]
   revision = "c155da19408a8799da419ed3eeb0cb5db0ad5dbc"
@@ -75,6 +90,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "7af33e6376af677d96d1a052057b04eeac99152e2b699e9b3ca99cdba7f54257"
+  inputs-digest = "9b8cff04984765faf989b55ee57cc6a57b834972748d16089a038a6f5ce9f699"
   solver-name = "gps-cdcl"
   solver-version = 1
