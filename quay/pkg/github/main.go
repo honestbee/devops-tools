@@ -22,18 +22,7 @@ type (
 	// Repo sruct type for github repo
 	Repo struct {
 		RepoName        string
-		RepoDescription *string
-	}
-
-	// TeamRoles struct keeps a reference to the Github team and a map of UserRoles
-	TeamRoles struct {
-		Team        github.Team
-		UserRoles   map[string]string
-		SortedUsers []string
-	}
-	// TeamRolesList struct keeps array of all TeamRoles
-	TeamRolesList struct {
-		TeamRoles []TeamRoles
+		RepoDescription string
 	}
 )
 
@@ -41,7 +30,6 @@ type (
 func (gh *Github) ListRepos() ([]Repo, error) {
 	ctx := context.Background()
 	var repos []Repo
-
 	opt := &github.RepositoryListByOrgOptions{
 		ListOptions: github.ListOptions{PerPage: 100},
 	}
@@ -62,9 +50,14 @@ func (gh *Github) ListRepos() ([]Repo, error) {
 	}
 
 	for _, r := range allRepos {
+		repoName := *r.FullName
+		repoDescription := ""
+		if r.Description != nil {
+			repoDescription = *r.Description
+		}
 		repos = append(repos, Repo{
-			*r.FullName,
-			r.Description,
+			repoName,
+			repoDescription,
 		})
 
 	}
