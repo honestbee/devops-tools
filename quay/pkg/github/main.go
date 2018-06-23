@@ -12,11 +12,14 @@ import (
 // ErrNotFound 404 not found
 var ErrNotFound = errors.New("404 Not found")
 
+// Client alias for github client
+type Client *github.Client
+
 type (
 	// Github struct maps the params we need to query Github
 	Github struct {
 		Organization string `json:"organization"`
-		Client       *github.Client
+		Client       Client
 	}
 
 	// Repo sruct type for github repo
@@ -65,10 +68,10 @@ func (gh *Github) ListRepos() ([]Repo, error) {
 }
 
 // GetGithubTokenClient create a new github token
-func GetGithubTokenClient(ctx context.Context, token string) *github.Client {
+func GetGithubTokenClient(ctx context.Context, token string) Client {
 	ts := oauth2.StaticTokenSource(
 		&oauth2.Token{AccessToken: token},
 	)
 	tc := oauth2.NewClient(ctx, ts)
-	return github.NewClient(tc)
+	return Client(github.NewClient(tc))
 }

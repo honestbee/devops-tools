@@ -5,17 +5,20 @@ import (
 	"fmt"
 	"os"
 
-	gh "github.com/honestbee/devops-tools/quay/pkg/github"
+	github "github.com/honestbee/devops-tools/quay/pkg/github"
 )
 
 func main() {
 	githubToken := os.Getenv("GITHUB_TOKEN")
 	ctx := context.Background()
-	ghClient := gh.GetGithubTokenClient(ctx, githubToken)
+	githubClient := github.GetGithubTokenClient(ctx, githubToken)
+	getGithubRepos("honestbee", githubClient)
+}
 
-	gitStruct := gh.Github{
-		Organization: "honestbee",
-		Client:       ghClient,
+func getGithubRepos(org string, client github.Client) error {
+	gitStruct := github.Github{
+		Organization: org,
+		Client:       client,
 	}
 
 	repos, err := gitStruct.ListRepos()
@@ -25,6 +28,7 @@ func main() {
 	}
 
 	if err != nil {
-		fmt.Println(err)
+		return err
 	}
+	return nil
 }
