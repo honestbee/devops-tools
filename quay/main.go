@@ -2,33 +2,34 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"os"
 
-	github "github.com/honestbee/devops-tools/quay/pkg/github"
+	"github.com/honestbee/devops-tools/quay/pkg/github"
+	"github.com/honestbee/devops-tools/quay/pkg/quay"
 )
 
-func main() {
+func getGithubRepos() ([]github.Repo, error) {
 	githubToken := os.Getenv("GITHUB_TOKEN")
 	ctx := context.Background()
-	githubClient := github.GetGithubTokenClient(ctx, githubToken)
-	getGithubRepos("honestbee", githubClient)
+	githubClient := github.NewClient(ctx, githubToken)
+
+	githubConfig := github.Config{
+		Organization: "honestbee",
+		Client:       githubClient,
+		Repo: github.RepoConfig{
+			Type: "private",
+		},
+	}
+
+	repos, err := githubConfig.ListRepos()
+	return repos, err
+
 }
 
-func getGithubRepos(org string, client github.Client) error {
-	gitStruct := github.Github{
-		Organization: org,
-		Client:       client,
+func createQuayRepos(githubRepos []github.Repo) []quay.RepositoryOutput {
+	for _, githubRepo := range githubRepos {
+		quay.
+			strings.Split(githubRepo, "/")[1]
 	}
 
-	repos, err := gitStruct.ListRepos()
-
-	for _, repo := range repos {
-		fmt.Printf("repo name: %v - repo description: %v", repo.RepoName, repo.RepoDescription)
-	}
-
-	if err != nil {
-		return err
-	}
-	return nil
 }

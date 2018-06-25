@@ -1,29 +1,36 @@
 package quay
 
 import (
-	"fmt"
 	"testing"
 )
 
 func TestCreateRepository(t *testing.T) {
-	ri := &RepositoryInput{
-		Namespace:   "honestbee",
-		Visibility:  "private",
-		Repository:  "tuan-test",
-		Description: "",
+	testCases := []struct {
+		ri   RepositoryInput
+		want RepositoryOutput
+	}{
+		{
+			ri: RepositoryInput{
+				Namespace:   "honestbee",
+				Visibility:  "private",
+				Repository:  "tuan-test",
+				Description: "",
+			},
+			want: RepositoryOutput{
+				Namespace: "honestbee",
+				Name:      "tuan-test",
+			},
+		},
 	}
 
-	want := RepositoryOutput{
-		Namespace: "honestbee",
-		Name:      "tuan-test",
-	}
+	for _, testCase := range testCases {
+		got, err := testCase.ri.CreateRepository()
+		if err != nil {
+			t.Errorf("unexpected error!: %v", err)
+		}
 
-	got, err := ri.CreateRepository()
-	if err != nil {
-		fmt.Println(err)
-	}
-
-	if got != want {
-		t.Errorf("got %v want %v", got, want)
+		if got != testCase.want {
+			t.Errorf("got %v want %v", got, testCase.want)
+		}
 	}
 }
