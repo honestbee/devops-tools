@@ -16,10 +16,16 @@ var ErrNotFound = errors.New("404 Not found")
 type Client *github.Client
 
 type (
-	// Github struct maps the params we need to query Github
-	Github struct {
+	// Config struct maps the params we need to query Config
+	Config struct {
 		Organization string `json:"organization"`
 		Client       Client
+		Repo         RepoConfig
+	}
+
+	// RepoConfig struct define repo attributes
+	RepoConfig struct {
+		Type string `json:"private"`
 	}
 
 	// Repo sruct type for github repo
@@ -30,17 +36,19 @@ type (
 )
 
 // ListRepos will list all repos for the organization
-func (gh *Github) ListRepos() ([]Repo, error) {
+func (c *Config) ListRepos() ([]Repo, error) {
 	ctx := context.Background()
 	var repos []Repo
 	opt := &github.RepositoryListByOrgOptions{
+		// https://github.com/google/go-github/blob/master/github/repos.go#L195
+		Type:        c.Repo.Type,
 		ListOptions: github.ListOptions{PerPage: 100},
 	}
 
 	// get all pages of results
 	var allRepos []*github.Repository
 	for {
-		repos, resp, err := gh.Client.Repositories.ListByOrg(ctx, gh.Organization, opt)
+		repos, resp, err := c.Client.Repositories.ListByOrg(ctx, c.Organization, opt)
 		if err != nil {
 			return nil, ErrNotFound
 		}
@@ -49,7 +57,7 @@ func (gh *Github) ListRepos() ([]Repo, error) {
 			break
 		}
 		opt.Page = resp.NextPage
-		log.Debugf("Github Rate Remaining: %v\n", resp.Rate.Remaining)
+		log.Debugf("Config Rate Remaining: %v\n", resp.Rate.Remaining)
 	}
 
 	for _, r := range allRepos {
@@ -67,8 +75,8 @@ func (gh *Github) ListRepos() ([]Repo, error) {
 	return repos, nil
 }
 
-// GetGithubTokenClient create a new github token
-func GetGithubTokenClient(ctx context.Context, token string) Client {
+// NewClient create a new github client
+func NewClient(ctx context.Context, token string) Client {
 	ts := oauth2.StaticTokenSource(
 		&oauth2.Token{AccessToken: token},
 	)

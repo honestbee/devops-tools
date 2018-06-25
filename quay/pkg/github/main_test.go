@@ -8,32 +8,38 @@ import (
 
 func TestListRepos(t *testing.T) {
 	ctx := context.Background()
-	githubClient := GetGithubTokenClient(ctx, os.Getenv("GITHUB_TOKEN"))
-	githubTests := []struct {
-		gh   Github
+	githubClient := NewClient(ctx, os.Getenv("GITHUB_TOKEN"))
+	testCases := []struct {
+		c    Config
 		want error
 	}{
 		{
-			Github{
+			Config{
 				Organization: "honestee",
 				Client:       githubClient,
+				Repo: RepoConfig{
+					Type: "private",
+				},
 			},
 			ErrNotFound,
 		},
 		{
-			Github{
+			Config{
 				Organization: "honestbee",
 				Client:       githubClient,
+				Repo: RepoConfig{
+					Type: "private",
+				},
 			},
 			nil,
 		},
 	}
 
-	for _, githubTest := range githubTests {
-		_, got := githubTest.gh.ListRepos()
+	for _, testCase := range testCases {
+		_, got := testCase.c.ListRepos()
 
-		if got != githubTest.want {
-			t.Errorf("got %v want %v", got, githubTest.want)
+		if got != testCase.want {
+			t.Errorf("got %v want %v", got, testCase.want)
 		}
 	}
 
