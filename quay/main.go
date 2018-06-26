@@ -4,9 +4,10 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"strings"
 
-	drone_go "github.com/drone/drone-go/drone"
-	"github.com/honestbee/devops-tools/quay/pkg/drone"
+	drone "github.com/drone/drone-go/drone"
+	drone_go "github.com/honestbee/devops-tools/quay/pkg/drone"
 	"github.com/honestbee/devops-tools/quay/pkg/github"
 	"github.com/honestbee/devops-tools/quay/pkg/quay"
 	"github.com/tuannvm/tools/pkg/utils"
@@ -30,14 +31,14 @@ func getGithubRepos() ([]github.Repo, error) {
 
 }
 
-func createQuayRepos(droneRepos []*drone_go.Repo) ([]quay.RepositoryOutput, error) {
+func createQuayRepos(droneRepos []*drone.Repo) ([]quay.RepositoryOutput, error) {
 	var quayRepoOuputs []quay.RepositoryOutput
 
 	for _, droneRepo := range droneRepos {
 		quayRepoInput := quay.RepositoryInput{
 			Namespace:   "honestbee",
 			Visibility:  droneRepo.Visibility,
-			Repository:  droneRepo.Name,
+			Repository:  strings.ToLower(droneRepo.Name),
 			Description: "",
 		}
 
@@ -51,8 +52,8 @@ func createQuayRepos(droneRepos []*drone_go.Repo) ([]quay.RepositoryOutput, erro
 
 }
 
-func droneRegistryCreate(c drone.Client, hostname, username, password string, repo *drone_go.Repo) error {
-	registry := &drone_go.Registry{
+func droneRegistryCreate(c drone.Client, hostname, username, password string, repo *drone.Repo) error {
+	registry := &drone.Registry{
 		Address:  hostname,
 		Username: username,
 		Password: password,
@@ -64,7 +65,7 @@ func droneRegistryCreate(c drone.Client, hostname, username, password string, re
 	return nil
 }
 
-func saveToCsv(droneRepos []drone_go.Repo) error {
+func saveToCsv(droneRepos []*drone.Repo) error {
 	file, err := os.Create("repos.csv")
 	if err != nil {
 		panic(err)
@@ -72,38 +73,105 @@ func saveToCsv(droneRepos []drone_go.Repo) error {
 
 	defer file.Close()
 
-	data := [][]string{
-		{"Name", "Created"},
-	}
+	data := [][]string{}
 
 	for _, droneRepo := range droneRepos {
-		data = append(data, []string{droneRepo.FullName, "true"})
+		data = append(data, []string{droneRepo.Name})
 	}
 
 	utils.SaveToCsv(file, data)
 	return nil
 }
 
+func droneSecretCreate(c drone.Client, name, value string, repo *drone.Repo) error {
+	var defaultSecretEvents = []string{
+		drone.EventPush,
+		drone.EventTag,
+		drone.EventDeploy,
+	}
+	secret := &drone.Secret{
+		Name:   name,
+		Value:  value,
+		Events: defaultSecretEvents,
+	}
+	_, err := c.SecretCreate(repo.Owner, repo.Name, secret)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func droneSecretDelete(c drone.Client, name, value string, repo *drone.Repo) error {
+	var defaultSecretEvents = []string{
+		drone.EventPush,
+		drone.EventTag,
+		drone.EventDeploy,
+	}
+	secret := &drone.Secret{
+		Name:   name,
+		Value:  value,
+		Events: defaultSecretEvents,
+	}
+	_, err := c.SecretCreate(repo.Owner, repo.Name, secret)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 func main() {
 
-	droneClient, _ := drone.NewClient()
+	droneClient, _ := drone_go.NewClient()
 	droneRepos, _ := droneClient.RepoList()
 
-	hostname := "quay.io"
-	username := os.Getenv("DRONE_USERNAME")
-	password := os.Getenv("DRONE_PASSWORD")
+	saveToCsv(droneRepos)
 
-	for _, droneRepo := range droneRepos {
-		err := droneRegistryCreate(droneClient, hostname, username, password, droneRepo)
-		if err != nil {
-			fmt.Println(err)
-		}
-	}
-	//	quayRepos, err := createQuayRepos(droneRepos)
+	// Create secret
+
+	//secrets := []struct {
+	//	Name  string
+	//	Value string
+	//}{
+	//	{
+	//		Name:  "quay_username",
+	//		Value: os.Getenv("QUAY_USERNAME"),
+	//	},
+	//	{
+	//		Name:  "quay_password",
+	//		Value: os.Getenv("QUAY_PASSWORD"),
+	//	},
+	//	{
+	//		Name:  "quay_registry",
+	//		Value: "quay.io",
+	//	},
+	//}
+
+	//for _, droneRepo := range droneRepos {
+	//	for _, secret := range secrets {
+	//		err := droneSecretCreate(droneClient, secret.Name, secret.Value, droneRepo)
+	//		if err != nil {
+	//			fmt.Println(err)
+	//		}
+	//	}
+	//}
+
+	// Create Registry
+	//hostname := "quay.io"
+	//username := os.Getenv("DRONE_USERNAME")
+	//password := os.Getenv("DRONE_PASSWORD")
+	//for _, droneRepo := range droneRepos {
+	//	err := droneRegistryCreate(droneClient, hostname, username, password, droneRepo)
 	//	if err != nil {
-	//		panic(err)
+	//		fmt.Println(err)
 	//	}
-	//	for _, quayRepo := range quayRepos {
-	//		fmt.Printf("%v\n", quayRepo.Name)
-	//	}
+	//}
+
+	// Create quay repo
+	quayRepos, err := createQuayRepos(droneRepos)
+	if err != nil {
+		panic(err)
+	}
+	for _, quayRepo := range quayRepos {
+		fmt.Printf("%v\n", quayRepo.Name)
+	}
 }
