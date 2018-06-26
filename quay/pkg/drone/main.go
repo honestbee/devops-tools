@@ -9,6 +9,15 @@ import (
 	"golang.org/x/oauth2"
 )
 
+// Repo alias
+type Repo drone.Repo
+
+// Client alias
+type Client drone.Client
+
+// Registry alias
+type Registry drone.Registry
+
 // NewClient returns a new client from the CLI context.
 func NewClient() (drone.Client, error) {
 	var (

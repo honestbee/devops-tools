@@ -2,6 +2,12 @@
 
 
 [[projects]]
+  name = "github.com/drone/drone-go"
+  packages = ["drone"]
+  revision = "3a20536622c5e513dea26c58f1e997cb4ab4dbc5"
+  version = "v0.8.4"
+
+[[projects]]
   name = "github.com/golang/protobuf"
   packages = ["proto"]
   revision = "b4deda0973fb4c70b50d226b1af49f3da59f5265"
@@ -39,6 +45,12 @@
   packages = ["."]
   revision = "c155da19408a8799da419ed3eeb0cb5db0ad5dbc"
   version = "v1.0.5"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/tuannvm/tools"
+  packages = ["pkg/utils"]
+  revision = "bafa39ed8da724556320fa90c196b532c40cc58f"
 
 [[projects]]
   branch = "master"
@@ -90,6 +102,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "146f9a90989bdeefa5ebad4b2d40f5cc9fdd0b9671fed49d08d3fee304055025"
+  inputs-digest = "570eec7b8075637404d0c80e9cb8ef34745ca3d8cde23b6cfe48c9a74df59677"
   solver-name = "gps-cdcl"
   solver-version = 1
