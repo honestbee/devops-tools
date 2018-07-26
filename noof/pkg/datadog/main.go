@@ -30,9 +30,7 @@ func (d Datadog) ListUsers(c *cli.Context) {
 func (d Datadog) AddUser(c *cli.Context) {
 	username := c.Args().Get(0)
 	client := NewDatadogClient(c)
-	user, _ := client.CreateUser(&username, &username)
-
-	fmt.Println(*user.Email)
+	client.CreateUser(&username, &username)
 
 }
 
