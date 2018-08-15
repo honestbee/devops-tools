@@ -28,7 +28,7 @@ var cfg = new(Config)
 
 func main() {
 	app := cli.NewApp()
-	app.Name = "drone-kfg"
+	app.Name = "drone-kubeconfig"
 	app.Version = fmt.Sprintf("0.1.%s", build)
 	app.Usage = "create drone secrets for kubernetes service accounts"
 	app.EnableBashCompletion = true
@@ -39,7 +39,7 @@ func main() {
 		},
 		cli.StringSliceFlag{
 			Name:  "context, c",
-			Usage: "`PREFIX=KUBE_CONTEXT` pairs for retrieving drone secrets",
+			Usage: "map `PREFIX` with equivalent `KUBE_CONTEXT` (e.g STAGING_1A=<kube-content-name>)",
 		},
 		cli.StringFlag{
 			Name:  "service-account, s",
@@ -56,14 +56,6 @@ func main() {
 			Usage: "`DURATION` before commands are cancelled",
 			Value: time.Second * 5,
 		},
-		// cli.StringSliceFlag{
-		// 	Name:  "event",
-		// 	Usage: "secret limited to these events",
-		// },
-		// cli.StringSliceFlag{
-		// 	Name:  "image",
-		// 	Usage: "secret limited to these images",
-		// },
 	}
 
 	app.Action = run
@@ -102,7 +94,7 @@ func run(c *cli.Context) error {
 	}
 
 	if len(ctxMap) < 1 {
-		fmt.Println("missing PREFIX=KUBE_CONTEXT pairs")
+		fmt.Println("missing <PREFIX>=<KUBE_CONTEXT>")
 		cli.ShowAppHelpAndExit(c, 1)
 	}
 
