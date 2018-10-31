@@ -1,27 +1,25 @@
 teams:
-- id: 1
-  name: Test team1
-  description: test team1
-  slug: test-team1
-  namespace: test
+- id: 4
+  name: Test team4
+  description: test team4
+  slug: test-team4
   user_roles:
     admin1: maintainer
     admin2: maintainer
     user1: member
-- id: 2
-  name: Test team2
-  description: test team2
-  slug: test-team2
-  namespace: test2
+- id: 5
+  name: Test team5
+  description: test team5
+  slug: test-team5
   privacy: secret
   user_roles:
     admin1: maintainer
     admin2: maintainer
     user2: member
-- id: 3
-  name: Test team3
-  description: test team3
-  slug: testteam3
+- id: 6
+  name: Test team6
+  description: test team6
+  slug: test-team6
   privacy: secret
   user_roles:
     admin1: maintainer

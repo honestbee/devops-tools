@@ -2,6 +2,9 @@ package main
 
 import (
 	"io/ioutil"
+	"os"
+	"path/filepath"
+	"regexp"
 	"strings"
 
 	yaml "gopkg.in/yaml.v2"
@@ -40,6 +43,42 @@ func (d *TeamFromYaml) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	d.SlugSuffix = sl[len(sl)-1]
 
 	return nil
+}
+
+func findTeamsYaml(teamsDir string) ([]string, error) {
+	fileList := []string{}
+	var yamlExp = regexp.MustCompile(`.(yaml|yml)`)
+
+	err := filepath.Walk(teamsDir, func(path string, f os.FileInfo, err error) error {
+		match := yamlExp.MatchString(path)
+		if match == true {
+			log.Debugf("Found match %q\n", path)
+			fileList = append(fileList, path)
+		}
+		return nil
+	})
+	if err != nil {
+		log.Errorf("Error walking path %q: %v\n", teamsDir, err)
+		return nil, err
+	}
+	return fileList, nil
+}
+
+func makeTeams(teamsDir string) (*TeamList, error) {
+	fileList, err := findTeamsYaml(teamsDir)
+	if err != nil {
+		return nil, err
+	}
+	tl := TeamList{}
+
+	for _, file := range fileList {
+		teamList, err := readTeams(file)
+		if err != nil {
+			return nil, err
+		}
+		tl.Teams = append(tl.Teams, teamList.Teams...)
+	}
+	return &tl, nil
 }
 
 func readTeams(yamlfile string) (*TeamList, error) {

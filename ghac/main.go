@@ -85,7 +85,7 @@ func run(c *cli.Context) error {
 		}
 	}
 
-	tl, err := readTeams(c.String("source"))
+	tl, err := makeTeams(c.String("source"))
 	if err != nil {
 		return err
 	}
