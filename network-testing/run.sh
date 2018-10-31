@@ -16,7 +16,7 @@ for pod in ${pods}; do
         sleep 5
     done
     ip=$(kubectl get pod ${pod} -o jsonpath='{.status.hostIP}')
-    kubectl exec -it ${pod} -- iperf3 -c iperf3-server.default -T "Client on ${ip}" $@
+    kubectl exec -it ${pod} -- iperf3 -c iperf3-server -T "Client on ${ip}" $@
     echo
 done
 
