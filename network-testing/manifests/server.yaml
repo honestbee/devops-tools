@@ -1,0 +1,24 @@
+apiVersion: extensions/v1beta1
+kind: DaemonSet
+metadata:
+  name: iperf3-client
+  labels:
+    name: iperf3-client
+spec:
+  selector:
+    matchLabels:
+      name: iperf3-client
+  template:
+    metadata:
+      labels:
+        name: iperf3-client
+    spec:
+      tolerations:  # schedule on master
+        - key: node-role.kubernetes.io/master
+          operator: Exists
+          effect: NoSchedule
+      containers:
+        - name: iperf3-client
+          image: networkstatic/iperf3
+          command: ['/bin/sh', '-c', 'sleep 3600']
+      terminationGracePeriodSeconds: 0
