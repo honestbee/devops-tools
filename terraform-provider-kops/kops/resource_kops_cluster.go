@@ -54,7 +54,7 @@ func resourceKopsClusterUpdate(d *schema.ResourceData, meta interface{}) error {
 	log.Printf("[DEBUG] Kops cluster request: %#v", config)
 	out, err := updateCluster(config)
 	if err != nil {
-		return fmt.Errorf("Error create cluster: %s", err)
+		return fmt.Errorf("Error create cluster: %v %s", out, err)
 	}
 
 	log.Printf("[DEBUG] Kops cluster response: %#v", out)
@@ -71,7 +71,7 @@ func resourceKopsClusterDelete(d *schema.ResourceData, meta interface{}) error {
 	log.Printf("[DEBUG] Delete kops cluster request: %#v", config)
 	out, err := deleteCluster(config)
 	if err != nil {
-		return fmt.Errorf("Error delete cluster: %s", err)
+		return fmt.Errorf("Error delete cluster: %v %s", out, err)
 	}
 
 	log.Printf("[DEBUG] Delete kops cluster response: %#v", out)
@@ -93,7 +93,7 @@ func resourceKopsClusterRead(d *schema.ResourceData, meta interface{}) error {
 
 		if !strings.Contains(out, config.clusterName) {
 			d.SetId("")
-			return nil
+			return fmt.Errorf("cluster not found: %v", out)
 		}
 
 		d.Set("cluster_name", d.Id())
