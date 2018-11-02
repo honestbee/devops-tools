@@ -93,7 +93,9 @@ func resourceKopsClusterRead(d *schema.ResourceData, meta interface{}) error {
 
 		if !strings.Contains(out, config.clusterName) {
 			d.SetId("")
-			return fmt.Errorf("cluster not found: %v", out)
+			return &resource.RetryError{
+				Err: fmt.Errorf("cluster not found: %v", out),
+			}
 		}
 
 		d.Set("cluster_name", d.Id())
