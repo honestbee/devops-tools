@@ -8,7 +8,7 @@ clone:
 
 pipeline:
   build:
-    image: quay.io/honestbee/monorepo
+    image: quay.io/honestbee/monorepo:2018-11-12-update-go-update-mbt
     pull: true
     commands:
       - mbt build diff --from `git rev-list --tags --max-count=2 | tail -n 1` --to ${DRONE_COMMIT_SHA}
